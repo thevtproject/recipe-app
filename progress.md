@@ -1,23 +1,24 @@
 # progress.md — Live Task Tracker
 
-Last updated: 2026-06-03
+Last updated: 2026-06-04
 
-## Current Phase: 0 — Pre-build (scaffolding complete)
+## Current Phase: 2 — Recipe Engine
 
-## Phase 1 — Scaffold + Auth
-| Task | Status | Owner | Notes |
-|------|--------|-------|-------|
-| Next.js project init | pending | SYSOPS | `npx create-next-app@latest` |
-| Tailwind + shadcn/ui setup | pending | FRONTEND | |
-| Prisma schema + migration | pending | DBA | User, Recipe, MealPlan models |
-| Auth.js v5 credentials provider | pending | BACKEND | isApproved gate |
-| Register page + API | pending | FRONTEND+BACKEND | |
-| Login page + API | pending | FRONTEND+BACKEND | isApproved check |
-| Middleware (route protection) | pending | BACKEND | |
-| Admin approval dashboard | pending | FRONTEND+BACKEND | list pending users, approve/reject |
-| SidebarLayout component | pending | FRONTEND | desktop sidebar + mobile bottom nav |
-| Auth tests | pending | QA | |
-| Auth security review | pending | SECURITY | |
+## Phase 1 — Scaffold + Auth ✅ DONE (2026-06-04)
+| Task | Status | Notes |
+|------|--------|-------|
+| Next.js project init | ✅ done | Next.js 14.2.35, TypeScript strict |
+| Tailwind + shadcn/ui setup | ✅ done | Japandi tokens, oklch CSS vars |
+| Prisma schema + migration | ✅ done | User, Recipe, MealPlan — migration pending DB |
+| Auth.js v5 credentials provider | ✅ done | isApproved gate, JWT callbacks |
+| Register page + API | ✅ done | zod validation, bcrypt saltRounds=12 |
+| Login page + API | ✅ done | isApproved check, /pending redirect |
+| Middleware (route protection) | ✅ done | gates /recipes, /planner, /admin |
+| Admin approval dashboard | ✅ done | GET/PATCH /api/admin/users |
+| SidebarLayout component | ✅ done | desktop sidebar + mobile bottom nav |
+| Seed admin user | ✅ done | prisma/seed.ts, tsx runner |
+| Auth tests | pending | QA |
+| Auth security review | pending | SECURITY |
 
 ## Phase 2 — Recipe Engine
 | Task | Status | Owner | Notes |
@@ -48,7 +49,7 @@ Last updated: 2026-06-03
 | Production hardening | pending | SECURITY | |
 
 ## Completed
-_Nothing yet._
+- Phase 1 — Scaffold + Auth (2026-06-04)
 
 ## Blocked
-_Nothing._
+- DB migration pending: PostgreSQL not running on localhost:5432. Run `docker run -e POSTGRES_USER=recipe_user -e POSTGRES_PASSWORD=<pass> -e POSTGRES_DB=recipe_db -p 5432:5432 -d postgres:16` then `npx prisma migrate dev`.
