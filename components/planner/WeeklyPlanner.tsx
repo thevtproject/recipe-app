@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Plus, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { RecipePicker } from './RecipePicker';
@@ -184,16 +185,21 @@ export function WeeklyPlanner() {
                   >
                     {plan ? (
                       <div className="w-full flex items-start gap-1.5 p-1">
-                        {plan.recipe.photoUrl && (
-                          <img
-                            src={plan.recipe.photoUrl}
-                            alt=""
-                            className="w-8 h-8 rounded object-cover flex-shrink-0 mt-0.5"
-                          />
-                        )}
-                        <p className="text-xs font-medium leading-snug flex-1 line-clamp-2">
-                          {plan.recipe.title}
-                        </p>
+                        <Link
+                          href={`/recipes/${plan.recipe.id}`}
+                          className="flex items-start gap-1.5 flex-1 min-w-0 hover:opacity-80 transition-opacity"
+                        >
+                          {plan.recipe.photoUrl && (
+                            <img
+                              src={plan.recipe.photoUrl}
+                              alt=""
+                              className="w-8 h-8 rounded object-cover flex-shrink-0 mt-0.5"
+                            />
+                          )}
+                          <p className="text-xs font-medium leading-snug flex-1 line-clamp-2">
+                            {plan.recipe.title}
+                          </p>
+                        </Link>
                         <button
                           onClick={() => handleRemove(plan.id)}
                           className="flex-shrink-0 text-muted-foreground hover:text-destructive transition-colors mt-0.5"
