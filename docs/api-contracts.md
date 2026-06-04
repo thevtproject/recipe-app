@@ -23,6 +23,15 @@ Auth: public | user (session + isApproved) | admin (session + role=ADMIN)
   - Max: 5MB
   - Returns: { data: { url: "/uploads/<uuid>.<ext>" }, error: null }
 
+## Meal Plans
+- GET /api/meal-plans?from=YYYY-MM-DD&until=YYYY-MM-DD — user's plans in range (includes recipe)
+- POST /api/meal-plans — upsert slot { date, mealType, recipeId } — user
+- DELETE /api/meal-plans/[id] — remove slot (owner only) — user
+
+## Admin
+- GET /api/admin/users?status=pending|approved|all — list users — admin
+- PATCH /api/admin/users — approve/reject user { userId, action } — admin
+
 ## Response shape (all routes)
 ```json
 // success

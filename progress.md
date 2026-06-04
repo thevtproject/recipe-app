@@ -2,7 +2,7 @@
 
 Last updated: 2026-06-04
 
-## Current Phase: 3 — Meal Planner
+## Current Phase: 4 — SysOps
 
 ## Phase 1 — Scaffold + Auth ✅ DONE (2026-06-04)
 | Task | Status | Notes |
@@ -30,13 +30,13 @@ Last updated: 2026-06-04
 | Add recipe page | ✅ done | /recipes/new |
 | Edit recipe page | ✅ done | /recipes/[id]/edit, owner+admin gate |
 
-## Phase 3 — Meal Planner
-| Task | Status | Owner | Notes |
-|------|--------|-------|-------|
-| MealPlan CRUD API | pending | BACKEND | |
-| FullCalendar weekly view | pending | FRONTEND | |
-| Slot assignment + recipe picker modal | pending | FRONTEND | |
-| Planner tests | pending | QA | |
+## Phase 3 — Meal Planner ✅ DONE (2026-06-04)
+| Task | Status | Notes |
+|------|--------|-------|
+| FullCalendar v6 install | ✅ done | @fullcalendar/react,daygrid,timegrid,interaction |
+| MealPlan API | ✅ done | GET/POST /api/meal-plans, DELETE /api/meal-plans/[id] |
+| RecipePicker dialog | ✅ done | searchable, filtered by mealType |
+| Weekly planner page | ✅ done | timeGridWeek, click-to-add, trash-to-remove |
 
 ## Phase 4 — SysOps
 | Task | Status | Owner | Notes |
@@ -51,6 +51,7 @@ Last updated: 2026-06-04
 ## Completed
 - Phase 1 — Scaffold + Auth (2026-06-04)
 - Phase 2 — Recipe Engine (2026-06-04)
+- Phase 3 — Meal Planner (2026-06-04)
 
 ## Blocked
 _None._

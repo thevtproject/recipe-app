@@ -3,6 +3,16 @@
 All notable changes to this project documented here.
 Format: [version] [date] — [description]
 
+## [0.3.0] — 2026-06-04
+
+### Phase 3 — Meal Planner
+- FullCalendar v6 (@fullcalendar/react, daygrid, timegrid, interaction)
+- GET/POST /api/meal-plans — date-range fetch, upsert by userId+date+mealType
+- DELETE /api/meal-plans/[id] — owner-only removal
+- RecipePicker dialog — searchable, pre-filtered by meal type
+- WeeklyPlanner component — timeGridWeek view, click slot → RecipePicker → assign, trash icon to remove
+- Japandi CSS overrides for FullCalendar toolbar and events
+
 ## [0.2.0] — 2026-06-04
 
 ### Phase 2 — Recipe Engine
