@@ -7,7 +7,7 @@ const updateSchema = z.object({
   title: z.string().min(1).max(200).optional(),
   description: z.string().max(1000).optional(),
   category: z.enum(['BREAKFAST', 'LUNCH', 'DINNER']).optional(),
-  photoUrl: z.union([z.string().url(), z.literal(''), z.null()]).optional(),
+  photoUrl: z.union([z.string(), z.literal(''), z.null()]).optional(),
   steps: z.array(z.object({
     order: z.number().int().min(1),
     instruction: z.string().min(1),

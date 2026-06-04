@@ -7,7 +7,7 @@ const createSchema = z.object({
   title: z.string().min(1).max(200),
   description: z.string().max(1000).optional(),
   category: z.enum(['BREAKFAST', 'LUNCH', 'DINNER']),
-  photoUrl: z.string().url().optional().or(z.literal('')),
+  photoUrl: z.string().optional().or(z.literal('')),
   steps: z.array(z.object({
     order: z.number().int().min(1),
     instruction: z.string().min(1),
