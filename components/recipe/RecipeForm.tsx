@@ -10,6 +10,7 @@ import { Plus, Trash2, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type Step = { order: number; instruction: string };
+type Ingredient = { amount: string; name: string };
 
 type RecipeFormProps = {
   mode: 'create' | 'edit';
@@ -20,6 +21,7 @@ type RecipeFormProps = {
     category?: 'BREAKFAST' | 'LUNCH' | 'DINNER';
     photoUrl?: string | null;
     steps?: Step[];
+    ingredients?: Ingredient[];
   };
 };
 
@@ -35,6 +37,9 @@ export function RecipeForm({ mode, recipeId, defaultValues }: RecipeFormProps) {
     defaultValues?.steps?.length
       ? [...defaultValues.steps].sort((a, b) => a.order - b.order)
       : [{ order: 1, instruction: '' }]
+  );
+  const [ingredients, setIngredients] = useState<Ingredient[]>(
+    defaultValues?.ingredients ?? []
   );
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -56,6 +61,20 @@ export function RecipeForm({ mode, recipeId, defaultValues }: RecipeFormProps) {
   function updateStep(index: number, instruction: string) {
     setSteps((prev) =>
       prev.map((s, i) => (i === index ? { ...s, instruction } : s))
+    );
+  }
+
+  function addIngredient() {
+    setIngredients((prev) => [...prev, { amount: '', name: '' }]);
+  }
+
+  function removeIngredient(index: number) {
+    setIngredients((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function updateIngredient(index: number, field: keyof Ingredient, value: string) {
+    setIngredients((prev) =>
+      prev.map((ing, i) => (i === index ? { ...ing, [field]: value } : ing))
     );
   }
 
@@ -94,6 +113,7 @@ export function RecipeForm({ mode, recipeId, defaultValues }: RecipeFormProps) {
         category,
         photoUrl: photoUrl || undefined,
         steps: filledSteps.map((s, i) => ({ order: i + 1, instruction: s.instruction.trim() })),
+        ingredients: ingredients.filter(i => i.name.trim()).map(i => ({ amount: i.amount.trim(), name: i.name.trim() })),
       };
 
       const url = mode === 'create' ? '/api/recipes' : `/api/recipes/${recipeId}`;
@@ -176,6 +196,39 @@ export function RecipeForm({ mode, recipeId, defaultValues }: RecipeFormProps) {
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Ingredients */}
+        <div className="space-y-3">
+          <Label>Ingredients</Label>
+          {ingredients.map((ing, index) => (
+            <div key={index} className="flex gap-2 items-center">
+              <Input
+                value={ing.amount}
+                onChange={(e) => updateIngredient(index, 'amount', e.target.value)}
+                placeholder="Amount (e.g. 200g)"
+                className="w-28 flex-shrink-0"
+              />
+              <Input
+                value={ing.name}
+                onChange={(e) => updateIngredient(index, 'name', e.target.value)}
+                placeholder="Ingredient name"
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => removeIngredient(index)}
+                className="text-muted-foreground hover:text-destructive flex-shrink-0"
+              >
+                <Trash2 size={14} />
+              </Button>
+            </div>
+          ))}
+          <Button type="button" variant="outline" size="sm" onClick={addIngredient}>
+            <Plus size={14} className="mr-1" /> Add ingredient
+          </Button>
         </div>
 
         {/* Photo */}
