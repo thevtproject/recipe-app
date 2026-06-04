@@ -7,6 +7,7 @@ import { ArrowLeft, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type Step = { order: number; instruction: string };
+type Ingredient = { amount: string; name: string };
 
 const CATEGORY_LABELS: Record<string, string> = {
   BREAKFAST: 'Breakfast',
@@ -32,6 +33,7 @@ export default async function RecipeDetailPage({
   if (!recipe) notFound();
 
   const steps = (recipe.steps as Step[]) ?? [];
+  const ingredients = (recipe.ingredients as Ingredient[]) ?? [];
   const canEdit =
     session?.user?.id === recipe.authorId ||
     (session?.user as any)?.role === 'ADMIN';
@@ -84,6 +86,21 @@ export default async function RecipeDetailPage({
           <p className="text-muted-foreground">{recipe.description}</p>
         )}
       </div>
+
+      {/* Ingredients */}
+      {ingredients.length > 0 && (
+        <div className="space-y-3">
+          <h2 className="text-lg font-medium">Ingredients</h2>
+          <ul className="space-y-2">
+            {ingredients.map((ing, i) => (
+              <li key={i} className="flex items-baseline gap-3 py-2 border-b border-border last:border-0">
+                <span className="text-sm font-medium text-primary w-24 flex-shrink-0">{ing.amount}</span>
+                <span className="text-sm">{ing.name}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* Steps */}
       {steps.length > 0 && (
