@@ -7,3 +7,6 @@ public/uploads/*.jpeg
 public/uploads/*.png
 public/uploads/*.webp
 !public/uploads/.gitkeep
+
+# Certbot Cloudflare API token — never commit
+certbot/cloudflare.ini
