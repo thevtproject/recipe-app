@@ -1,0 +1,85 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-recipe_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-recipe_db}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-recipe_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+        NEXTAUTH_URL: ${NEXTAUTH_URL}
+        DATABASE_URL: postgresql://${POSTGRES_USER:-recipe_user}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-recipe_db}
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-recipe_user}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-recipe_db}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      NEXTAUTH_URL: ${NEXTAUTH_URL}
+      UPLOAD_DIR: /app/public/uploads
+      NODE_ENV: production
+    volumes:
+      - uploads:/app/public/uploads
+    networks:
+      - internal
+      - web
+    depends_on:
+      db:
+        condition: service_healthy
+
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - certbot_www:/var/www/certbot:ro
+      - certbot_certs:/etc/letsencrypt:ro
+    networks:
+      - web
+    depends_on:
+      - app
+
+  certbot:
+    image: certbot/dns-cloudflare
+    restart: "no"
+    volumes:
+      - certbot_certs:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+      - ./certbot/cloudflare.ini:/etc/letsencrypt/cloudflare.ini:ro
+    command: >-
+      certonly
+      --dns-cloudflare
+      --dns-cloudflare-credentials /etc/letsencrypt/cloudflare.ini
+      --dns-cloudflare-propagation-seconds 30
+      --email ${CERTBOT_EMAIL}
+      --agree-tos
+      --no-eff-email
+      -d recipes.thevtproject.my.id
+      --non-interactive
+
+volumes:
+  pgdata:
+  uploads:
+  certbot_certs:
+  certbot_www:
+
+networks:
+  internal:
+    internal: true
+  web:
