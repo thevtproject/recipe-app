@@ -2,4 +2,8 @@ node_modules
 .next
 .env
 .env.local
-uploads/
+public/uploads/*.jpg
+public/uploads/*.jpeg
+public/uploads/*.png
+public/uploads/*.webp
+!public/uploads/.gitkeep
