@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { Home, BookOpen, Calendar, Settings } from "lucide-react";
 
 const navItems = [
-  { href: "/", label: "Dashboard", icon: Home },
+  { href: "/dashboard", label: "Dashboard", icon: Home },
   { href: "/recipes", label: "Recipe Book", icon: BookOpen },
   { href: "/planner", label: "Weekly Planner", icon: Calendar },
 ];

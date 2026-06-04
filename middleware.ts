@@ -12,13 +12,14 @@ export default auth((req) => {
     nextUrl.pathname.startsWith("/login") ||
     nextUrl.pathname.startsWith("/register");
   const isAppRoute =
+    nextUrl.pathname.startsWith("/dashboard") ||
     nextUrl.pathname.startsWith("/recipes") ||
     nextUrl.pathname.startsWith("/planner");
   const isAdminRoute = nextUrl.pathname.startsWith("/admin");
 
   // Redirect authenticated users away from auth pages
   if (isAuthRoute && isLoggedIn) {
-    return NextResponse.redirect(new URL("/", nextUrl));
+    return NextResponse.redirect(new URL("/dashboard", nextUrl));
   }
 
   // Protect app routes — require login
@@ -28,7 +29,7 @@ export default auth((req) => {
 
   // Protect admin routes — require ADMIN role
   if (isAdminRoute && (!isLoggedIn || !isAdmin)) {
-    return NextResponse.redirect(new URL("/", nextUrl));
+    return NextResponse.redirect(new URL("/dashboard", nextUrl));
   }
 
   return NextResponse.next();
