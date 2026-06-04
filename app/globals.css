@@ -91,3 +91,29 @@
     @apply font-sans;
   }
 }
+
+/* FullCalendar Japandi overrides */
+.fc-japandi .fc-toolbar-title {
+  font-size: 1rem;
+  font-weight: 600;
+}
+.fc-japandi .fc-button {
+  background-color: var(--primary) !important;
+  border-color: var(--primary) !important;
+  font-size: 0.8rem !important;
+  padding: 0.25rem 0.75rem !important;
+}
+.fc-japandi .fc-button:hover {
+  opacity: 0.85 !important;
+}
+.fc-japandi .fc-col-header-cell-cushion,
+.fc-japandi .fc-timegrid-slot-label-cushion {
+  font-size: 0.75rem;
+}
+.fc-japandi .fc-timegrid-event {
+  border-radius: 6px !important;
+  border: none !important;
+}
+.fc-japandi .fc-timegrid-event .fc-event-main {
+  padding: 0;
+}
