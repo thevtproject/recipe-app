@@ -3,6 +3,18 @@
 All notable changes to this project documented here.
 Format: [version] [date] — [description]
 
+## [1.0.0] — 2026-06-04 🚀
+
+### Phase 4 — SysOps (Production-Ready)
+- Dockerfile — multi-stage (deps, builder, runner), standalone Next.js, non-root user
+- docker-compose.yml — 4 services: db (postgres:16-alpine), app (Next.js standalone), nginx (alpine), certbot (dns-cloudflare)
+- Nginx reverse proxy — HTTP→HTTPS redirect, TLS termination, security headers (HSTS, X-Frame-Options, nosniff)
+- Certbot DNS-01 — Cloudflare plugin for automated TLS cert issuance/renewal, no inbound port 80/443 needed
+- .env.example — all production env vars documented
+- next.config.mjs — output: standalone, bcryptjs externalized, image domains whitelisted
+- deploy.sh — automated first-boot: HTTP-only → cert issuance → HTTPS switch → migration → seed
+- docs/DEPLOY.md — full production guide: Cloudflare setup, port forwarding, troubleshooting, backup/restore
+
 ## [0.3.0] — 2026-06-04
 
 ### Phase 3 — Meal Planner

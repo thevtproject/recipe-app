@@ -38,20 +38,22 @@ Last updated: 2026-06-04
 | RecipePicker dialog | ✅ done | searchable, filtered by mealType |
 | Weekly planner page | ✅ done | timeGridWeek, click-to-add, trash-to-remove |
 
-## Phase 4 — SysOps
-| Task | Status | Owner | Notes |
-|------|--------|-------|-------|
-| Dockerfile (multi-stage) | pending | SYSOPS | |
-| docker-compose.yml | pending | SYSOPS | app + db + nginx + certbot |
-| Nginx reverse proxy config | pending | SYSOPS | |
-| Certbot DNS-01 TLS | pending | SYSOPS | no port 80/443 required |
-| .env.example | pending | SYSOPS | |
-| Production hardening | pending | SECURITY | |
+## Phase 4 — SysOps ✅ DONE (2026-06-04)
+| Task | Status | Notes |
+|------|--------|-------|
+| Dockerfile (multi-stage) | ✅ done | deps, builder, runner stages, standalone output |
+| docker-compose.yml | ✅ done | app + db + nginx + certbot services, named volumes |
+| Nginx reverse proxy | ✅ done | HTTP→HTTPS redirect, TLS termination, security headers |
+| Certbot DNS-01 | ✅ done | certbot/dns-cloudflare, cloudflare.ini token file |
+| .env.example + docs | ✅ done | DEPLOY.md with Cloudflare + port forwarding guide |
+| next.config standalone | ✅ done | output: standalone, bcryptjs external, image domains |
+| deploy.sh script | ✅ done | automated first-boot cert + migration + seed |
 
 ## Completed
 - Phase 1 — Scaffold + Auth (2026-06-04)
 - Phase 2 — Recipe Engine (2026-06-04)
 - Phase 3 — Meal Planner (2026-06-04)
+- Phase 4 — SysOps (2026-06-04)
 
 ## Blocked
 _None._
