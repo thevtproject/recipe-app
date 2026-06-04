@@ -2,7 +2,7 @@
 
 Last updated: 2026-06-04
 
-## Current Phase: 2 — Recipe Engine
+## Current Phase: 3 — Meal Planner
 
 ## Phase 1 — Scaffold + Auth ✅ DONE (2026-06-04)
 | Task | Status | Notes |
@@ -20,15 +20,15 @@ Last updated: 2026-06-04
 | Auth tests | pending | QA |
 | Auth security review | pending | SECURITY |
 
-## Phase 2 — Recipe Engine
-| Task | Status | Owner | Notes |
-|------|--------|-------|-------|
-| Recipe CRUD API | pending | BACKEND | |
-| Recipe list page + filters | pending | FRONTEND | breakfast/lunch/dinner tabs |
-| Recipe detail page | pending | FRONTEND | steps, photo |
-| Photo upload handler | pending | BACKEND | MIME validate, max 5MB, uuid filename |
-| Add/edit recipe form | pending | FRONTEND | |
-| Recipe tests | pending | QA | |
+## Phase 2 — Recipe Engine ✅ DONE (2026-06-04)
+| Task | Status | Notes |
+|------|--------|-------|
+| Recipe CRUD API | ✅ done | GET/POST /api/recipes, GET/PATCH/DELETE /api/recipes/[id] |
+| Photo upload API | ✅ done | magic byte validation, 5MB limit, uuid filename |
+| Recipe list page | ✅ done | category filter tabs, responsive card grid, skeleton |
+| Recipe detail page | ✅ done | photo, steps, owner edit link |
+| Add recipe page | ✅ done | /recipes/new |
+| Edit recipe page | ✅ done | /recipes/[id]/edit, owner+admin gate |
 
 ## Phase 3 — Meal Planner
 | Task | Status | Owner | Notes |
@@ -50,6 +50,7 @@ Last updated: 2026-06-04
 
 ## Completed
 - Phase 1 — Scaffold + Auth (2026-06-04)
+- Phase 2 — Recipe Engine (2026-06-04)
 
 ## Blocked
-- DB migration pending: PostgreSQL not running on localhost:5432. Run `docker run -e POSTGRES_USER=recipe_user -e POSTGRES_PASSWORD=<pass> -e POSTGRES_DB=recipe_db -p 5432:5432 -d postgres:16` then `npx prisma migrate dev`.
+_None._

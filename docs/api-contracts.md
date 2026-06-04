@@ -12,27 +12,16 @@ Auth: public | user (session + isApproved) | admin (session + role=ADMIN)
 
 ## Recipes
 - GET /api/recipes — list recipes, ?category=BREAKFAST|LUNCH|DINNER filter — user
-- POST /api/recipes — create recipe — user
+- POST /api/recipes — create recipe { title, description?, category, photoUrl?, steps } — user
 - GET /api/recipes/[id] — get recipe detail — user
-- PATCH /api/recipes/[id] — update recipe — user (own) | admin
-- DELETE /api/recipes/[id] — delete recipe — user (own) | admin
-
-## Meal Plans
-- GET /api/meal-plans?from=&until= — list user's meal plans in date range — user
-- POST /api/meal-plans — assign recipe to slot — user
-- PATCH /api/meal-plans/[id] — update slot — user (own)
-- DELETE /api/meal-plans/[id] — clear slot — user (own)
-
-## Admin
-- GET /api/admin/users — list all users — admin
-- GET /api/admin/users?status=pending — list unapproved users — admin
-- PATCH /api/admin/users/[id]/approve — approve user — admin
-- PATCH /api/admin/users/[id]/reject — reject/deactivate user — admin
+- PATCH /api/recipes/[id] — update recipe (owner or admin) — user
+- DELETE /api/recipes/[id] — delete recipe (owner or admin) — user
 
 ## Uploads
-- POST /api/uploads — upload food photo, returns { url: "/uploads/<uuid>.<ext>" } — user
-  - Accept: image/jpeg, image/png, image/webp
+- POST /api/uploads — upload food photo (multipart field: file) — user
+  - Accept: image/jpeg, image/png, image/webp (magic byte validated)
   - Max: 5MB
+  - Returns: { data: { url: "/uploads/<uuid>.<ext>" }, error: null }
 
 ## Response shape (all routes)
 ```json

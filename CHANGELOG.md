@@ -3,6 +3,18 @@
 All notable changes to this project documented here.
 Format: [version] [date] — [description]
 
+## [0.2.0] — 2026-06-04
+
+### Phase 2 — Recipe Engine
+- GET/POST /api/recipes with category filter (BREAKFAST/LUNCH/DINNER)
+- GET/PATCH/DELETE /api/recipes/[id] — owner or ADMIN authorization
+- POST /api/uploads — magic byte MIME validation, 5MB cap, uuid filename, local filesystem
+- Recipe list page /recipes — tabs filter, responsive 3-col card grid, loading skeleton, empty state
+- Recipe detail page /recipes/[id] — full photo, numbered step cards, author/admin edit link
+- Add recipe page /recipes/new — full-page RecipeForm
+- Edit recipe page /recipes/[id]/edit — server-side owner/admin gate
+- Shared RecipeForm component — inline photo upload, dynamic steps list, category picker
+
 ## [0.1.0] — 2026-06-04
 
 ### Phase 1 — Scaffold + Auth
