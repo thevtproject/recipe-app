@@ -12,6 +12,10 @@ const updateSchema = z.object({
     order: z.number().int().min(1),
     instruction: z.string().min(1),
   })).optional(),
+  ingredients: z.array(z.object({
+    amount: z.string().min(1),
+    name: z.string().min(1),
+  })).optional(),
 });
 
 async function getRecipeOrFail(id: string) {

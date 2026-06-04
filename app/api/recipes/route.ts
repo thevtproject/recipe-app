@@ -12,6 +12,10 @@ const createSchema = z.object({
     order: z.number().int().min(1),
     instruction: z.string().min(1),
   })).default([]),
+  ingredients: z.array(z.object({
+    amount: z.string().min(1),
+    name: z.string().min(1),
+  })).default([]),
 });
 
 // GET /api/recipes?category=BREAKFAST|LUNCH|DINNER
@@ -50,7 +54,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ data: null, error: 'Invalid input', details: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { title, description, category, photoUrl, steps } = parsed.data;
+  const { title, description, category, photoUrl, steps, ingredients } = parsed.data;
 
   const recipe = await prisma.recipe.create({
     data: {
@@ -59,6 +63,7 @@ export async function POST(req: NextRequest) {
       category,
       photoUrl: photoUrl || null,
       steps,
+      ingredients,
       authorId: session.user.id!,
     },
   });
