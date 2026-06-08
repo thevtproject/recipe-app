@@ -19,4 +19,4 @@ docker rm recipe-app-app-dev-1 2>/dev/null || true
 # Start new dev container
 docker compose up -d app-dev
 
-echo "=== Dev deployed: https://dev.recipes.vtproject.my.id ==="
+echo "=== Dev deployed: https://dev.vtproject.my.id ==="
