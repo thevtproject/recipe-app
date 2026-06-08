@@ -8,7 +8,7 @@ import { Search } from 'lucide-react';
 type Recipe = {
   id: string;
   title: string;
-  category: 'BREAKFAST' | 'LUNCH' | 'DINNER';
+  categories: ('BREAKFAST' | 'LUNCH' | 'DINNER' | 'BABY')[];
   photoUrl: string | null;
   author: { name: string };
 };
@@ -17,11 +17,12 @@ const CATEGORY_COLORS: Record<string, string> = {
   BREAKFAST: 'bg-amber-100 text-amber-800',
   LUNCH: 'bg-green-100 text-green-800',
   DINNER: 'bg-blue-100 text-blue-800',
+  BABY: 'bg-pink-100 text-pink-800',
 };
 
 interface RecipePickerProps {
   open: boolean;
-  mealType: 'BREAKFAST' | 'LUNCH' | 'DINNER' | null;
+  mealType: 'BREAKFAST' | 'LUNCH' | 'DINNER' | 'BABY' | null;
   onSelect: (recipeId: string) => void;
   onClose: () => void;
 }
@@ -92,9 +93,11 @@ export function RecipePicker({ open, mealType, onSelect, onClose }: RecipePicker
                   <p className="text-sm font-medium truncate">{recipe.title}</p>
                   <p className="text-xs text-muted-foreground">{recipe.author.name}</p>
                 </div>
-                <span className={`text-xs px-1.5 py-0.5 rounded-full flex-shrink-0 ${CATEGORY_COLORS[recipe.category]}`}>
-                  {recipe.category.charAt(0) + recipe.category.slice(1).toLowerCase()}
-                </span>
+                {recipe.categories[0] && (
+                  <span className={`text-xs px-1.5 py-0.5 rounded-full flex-shrink-0 ${CATEGORY_COLORS[recipe.categories[0]]}`}>
+                    {recipe.categories[0].charAt(0) + recipe.categories[0].slice(1).toLowerCase()}
+                  </span>
+                )}
               </button>
             ))
           )}

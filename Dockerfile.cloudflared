@@ -1,0 +1,7 @@
+FROM cloudflare/cloudflared:alpine
+USER root
+RUN mkdir -p /home/cloudflared/.cloudflared
+COPY df0afd2f-*.json /home/cloudflared/.cloudflared/
+COPY cloudflared-config.yml /home/cloudflared/.cloudflared/config.yml
+RUN chown -R cloudflared:cloudflared /home/cloudflared/.cloudflared
+USER cloudflared

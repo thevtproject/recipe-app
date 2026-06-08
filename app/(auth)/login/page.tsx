@@ -31,6 +31,12 @@ export default function LoginPage() {
 
     setLoading(false);
 
+    if ((result?.error as string)?.startsWith("RATE_LIMITED:")) {
+      const msg = (result?.error as string).slice("RATE_LIMITED:".length);
+      setError(msg);
+      return;
+    }
+
     if ((result?.error as string) === "ACCOUNT_PENDING_APPROVAL") {
       router.push("/pending");
       return;
@@ -80,6 +86,11 @@ export default function LoginPage() {
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Signing in…" : "Sign in"}
           </Button>
+          <p className="text-center text-sm text-muted-foreground">
+            <Link href="/forgot-password" className="underline hover:text-foreground">
+              Forgot password?
+            </Link>
+          </p>
         </form>
         <p className="text-center text-sm text-muted-foreground mt-4">
           No account?{" "}

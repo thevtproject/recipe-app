@@ -10,3 +10,24 @@ public/uploads/*.webp
 
 # Certbot Cloudflare API token — never commit
 certbot/cloudflare.ini
+
+# Cloudflare Tunnel credentials (contain secret tunnel key)
+*.tunnel-credentials.json
+# UUID-named tunnel credential files
+/[a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9]-*.json
+df0afd2f-*.json
+# Cloudflare config that contains tunnel ID
+cloudflared-config.yml
+
+# Build artifacts
+*.tsbuildinfo
+
+# Internal documents — not part of source code
+SECURITY_AUDIT_*.md
+SECURITY_AUDIT_*.html
+MVP-REPORT.html
+MVP-REPORT-*.html
+docs/plans/
+docs/qa-security-report-*.md
+docs/recipe-book-promo.*
+progress.md

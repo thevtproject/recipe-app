@@ -8,6 +8,58 @@
   }
 }
 
+/* Print styles — hide chrome (sidebar / bottom nav), reset paddings,
+ * show the print-only header, and force readable colors on paper. */
+@media print {
+  /* Hide the fixed sidebar and mobile bottom nav */
+  nav.fixed.bottom-0,
+  .md\:flex.md\:w-64.md\:flex-col.md\:fixed.md\:inset-y-0 {
+    display: none !important;
+  }
+
+  /* Reset the main content's left/right padding (it has md:pl-64 / pb-24
+   * to clear the chrome — irrelevant when printing). */
+  main.p-6 {
+    padding: 0 !important;
+  }
+  .md\:pl-64 {
+    padding-left: 0 !important;
+  }
+
+  /* Page setup: white background, black text, no shadows */
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+  .bg-card,
+  .bg-background,
+  .bg-muted {
+    background: #fff !important;
+  }
+  .text-foreground,
+  .text-card-foreground,
+  .text-muted-foreground {
+    color: #000 !important;
+  }
+  .ring-foreground\/10,
+  .border-border {
+    border-color: #d4d4d4 !important;
+  }
+  .shadow,
+  .shadow-sm,
+  .shadow-md,
+  .shadow-lg {
+    box-shadow: none !important;
+  }
+
+  /* Avoid page breaks inside a category card */
+  section {
+    break-inside: avoid;
+  }
+}
+
+
 @layer base {
   .theme {
     --font-heading: var(--font-sans);

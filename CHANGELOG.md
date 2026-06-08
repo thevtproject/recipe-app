@@ -57,3 +57,16 @@ Format: [version] [date] — [description]
 
 ---
 _Versions start at 0.1.0 (local dev). 1.0.0 = first production deploy._
+
+## 1.1.0 — Phase 6 Family Features (2026-06-04)
+- Image compression pipeline (sharp, libvips in Docker)
+- Recipe scaling with fraction display
+- 1-5 star ratings + comments
+- "I cooked this" history + lastCookedAt badge
+- Multi-recipe per meal slot
+- Multi-category recipes (form + filter)
+- Shopping list with category groups + checkboxes
+- Planner print (browser PDF)
+- Planner WhatsApp share (wa.me)
+- Planner share link (public read-only, 30-day TTL)
+- Households: create/join via 8-char code, members, leave, multi-user plans

@@ -60,13 +60,38 @@ export async function PATCH(req: NextRequest) {
   }
 
   const { userId, action } = parsed.data;
+  const actingAdminId = (session.user as any).id as string;
+
+  // Self-protection: an admin cannot approve/reject themselves via this
+  // endpoint. They can change their own role via a dedicated flow (none
+  // exists yet — would require additional design).
+  if (userId === actingAdminId) {
+    return NextResponse.json(
+      { data: null, error: "Admins cannot approve or reject their own account" },
+      { status: 400 }
+    );
+  }
+
+  // Verify the target user exists. Without this we'd accept arbitrary ids
+  // and get a Prisma P2025 error leaking the model.
+  const target = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, role: true, isApproved: true },
+  });
+  if (!target) {
+    return NextResponse.json({ data: null, error: "User not found" }, { status: 404 });
+  }
 
   if (action === "reject") {
-    // Delete the user entirely on reject
+    // Hard delete on reject. Reject = "we don't want this account at all".
+    // Their data (recipes, ratings, meal-plans) is cascaded.
     await prisma.user.delete({ where: { id: userId } });
     return NextResponse.json({ data: { deleted: true }, error: null });
   }
 
+  // action === "approve"
+  // Don't allow demoting a fellow admin to a non-admin via approval. They
+  // would already be approved, so this is a no-op in the common case.
   const user = await prisma.user.update({
     where: { id: userId },
     data: { isApproved: true },

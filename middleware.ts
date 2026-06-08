@@ -1,5 +1,9 @@
-import { auth } from "@/lib/auth";
+import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
+import { authConfig } from "@/auth.config";
+
+// Edge-safe NextAuth instance (no Prisma, no bcrypt)
+const { auth } = NextAuth(authConfig);
 
 export default auth((req) => {
   const session = req.auth;
@@ -14,7 +18,12 @@ export default auth((req) => {
   const isAppRoute =
     nextUrl.pathname.startsWith("/dashboard") ||
     nextUrl.pathname.startsWith("/recipes") ||
-    nextUrl.pathname.startsWith("/planner");
+    nextUrl.pathname.startsWith("/profile") ||
+    nextUrl.pathname.startsWith("/favorites");
+  // /planner/share/* is public (token-based access); other /planner routes are auth-gated
+  const isPublicPlannerShare = /^\/planner\/share\/[^/]+$/.test(nextUrl.pathname);
+  const isProtectedPlanner =
+    nextUrl.pathname.startsWith("/planner") && !isPublicPlannerShare;
   const isAdminRoute = nextUrl.pathname.startsWith("/admin");
 
   // Redirect authenticated users away from auth pages
@@ -23,13 +32,18 @@ export default auth((req) => {
   }
 
   // Protect app routes — require login
-  if (isAppRoute && !isLoggedIn) {
+  if ((isAppRoute || isProtectedPlanner) && !isLoggedIn) {
     return NextResponse.redirect(new URL("/login", nextUrl));
   }
 
   // Protect admin routes — require ADMIN role
-  if (isAdminRoute && (!isLoggedIn || !isAdmin)) {
-    return NextResponse.redirect(new URL("/dashboard", nextUrl));
+  if (isAdminRoute) {
+    if (!isLoggedIn) {
+      return NextResponse.redirect(new URL("/login", nextUrl));
+    }
+    if (!isAdmin) {
+      return NextResponse.redirect(new URL("/dashboard", nextUrl));
+    }
   }
 
   return NextResponse.next();

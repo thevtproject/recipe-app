@@ -1,7 +1,8 @@
-// Prisma schema — recipe app
+// Prisma schema — recipe app (Phase 6)
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
@@ -18,53 +19,159 @@ enum MealCategory {
   BREAKFAST
   LUNCH
   DINNER
+  BABY
 }
 
 model User {
-  id         String     @id @default(cuid())
-  email      String     @unique
-  password   String
-  name       String
-  role       Role       @default(USER)
-  isApproved Boolean    @default(false)
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
+  id          String   @id @default(cuid())
+  email       String   @unique
+  password    String
+  name        String
+  role        Role     @default(USER)
+  isApproved  Boolean  @default(false)
+  avatarUrl   String?
+  // Phase 6
+  householdId String?
+  household   Household? @relation(fields: [householdId], references: [id], onDelete: SetNull)
+  // Phase 7: when true, the weekly planner shows a 4th "Baby" meal slot
+  hasBabyPlanner Boolean @default(false)
+  // Password reset (email flow)
+  passwordResetToken   String?   @unique
+  passwordResetExpires DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  recipes    Recipe[]
-  mealPlans  MealPlan[]
+  recipes      Recipe[]
+  mealPlans    MealPlan[]
+  favorites    Favorite[]
+  ratings      Rating[]
+  cookedHistory CookedHistory[]
 
+  @@index([householdId])
   @@map("users")
 }
 
-model Recipe {
-  id          String       @id @default(cuid())
-  title       String
-  description String?
-  category    MealCategory
-  photoUrl    String?
-  steps       Json         @default("[]")
-  ingredients Json         @default("[]")
-  authorId    String
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+model Household {
+  id         String   @id @default(cuid())
+  name       String
+  inviteCode String   @unique
+  createdAt  DateTime @default(now())
 
-  author    User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  members   User[]
   mealPlans MealPlan[]
 
-  @@map("recipes")
+  @@map("households")
 }
 
-model MealPlan {
-  id        String       @id @default(cuid())
+model Favorite {
+  id        String   @id @default(cuid())
   userId    String
-  date      DateTime     @db.Date
-  mealType  MealCategory
   recipeId  String
-  createdAt DateTime     @default(now())
+  createdAt DateTime @default(now())
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, date, mealType])
+  @@unique([userId, recipeId])
+  @@index([userId])
+  @@map("favorites")
+}
+
+model Rating {
+  id        String   @id @default(cuid())
+  userId    String
+  recipeId  String
+  stars     Int
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, recipeId])
+  @@index([recipeId])
+  @@map("ratings")
+}
+
+model CookedHistory {
+  id        String   @id @default(cuid())
+  userId    String
+  recipeId  String
+  cookedAt  DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([recipeId])
+  @@index([recipeId, cookedAt])
+  @@map("cooked_history")
+}
+
+model Recipe {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  notes       String?
+  prepTimeMin Int?
+  cookTimeMin Int?
+  // Phase 6: multiple categories (e.g. breakfast + lunch)
+  categories  MealCategory[] @default([])
+  // Phase 6: serving size for the recipe as-written
+  servings    Int      @default(4)
+  photoUrl    String?
+  steps       Json     @default("[]")
+  ingredients Json     @default("[]")
+  authorId    String
+  // Phase 6: denormalized rating + cooked counters
+  ratingAvg   Float?
+  ratingCount Int      @default(0)
+  lastCookedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  author       User            @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  mealPlans    MealPlan[]
+  favorites    Favorite[]
+  ratings      Rating[]
+  cookedHistory CookedHistory[]
+
+  @@index([authorId])
+  @@index([ratingAvg])
+  @@index([lastCookedAt])
+  @@map("recipes")
+}
+
+model MealPlan {
+  id          String        @id @default(cuid())
+  // Exactly one of userId or householdId is set (DB-level check constraint)
+  userId      String?
+  householdId String?
+  date        DateTime      @db.Date
+  mealType    MealCategory
+  recipeId    String
+  createdAt   DateTime      @default(now())
+
+  user      User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  household Household? @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  recipe    Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date])
+  @@index([householdId, date])
   @@map("meal_plans")
+}
+
+model PlanShare {
+  token     String   @id @default(cuid())
+  scope     String   // "ME" | "FAMILY"
+  // refId = "<userId|householdId>|<from>|<until>" (window packed into refId)
+  refId     String
+  createdBy String
+  expiresAt DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([token])
+  @@index([refId])
+  @@map("plan_shares")
 }

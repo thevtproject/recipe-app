@@ -4,6 +4,14 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 type User = {
   id: string;
@@ -14,11 +22,20 @@ type User = {
   createdAt: string;
 };
 
+type ResetResult = {
+  open: boolean;
+  tempPassword: string;
+  userName: string;
+  userEmail: string;
+};
+
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"pending" | "approved" | "all">("pending");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [resetDialog, setResetDialog] = useState<ResetResult | null>(null);
+  const [copied, setCopied] = useState(false);
 
   async function fetchUsers() {
     setLoading(true);
@@ -41,6 +58,34 @@ export default function AdminUsersPage() {
     });
     setActionLoading(null);
     fetchUsers();
+  }
+
+  async function handleResetPassword(userId: string) {
+    if (!confirm("Generate a new temporary password for this user? Their current password will stop working.")) return;
+    setActionLoading(userId + "reset");
+    const res = await fetch("/api/admin/reset-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId }),
+    });
+    const json = await res.json();
+    setActionLoading(null);
+    if (!res.ok) {
+      alert(json.error ?? "Failed to reset password");
+      return;
+    }
+    setCopied(false);
+    setResetDialog({
+      open: true,
+      tempPassword: json.data.tempPassword,
+      userName: json.data.name,
+      userEmail: json.data.email,
+    });
+  }
+
+  function handleCopy() {
+    navigator.clipboard.writeText(resetDialog?.tempPassword ?? "");
+    setCopied(true);
   }
 
   return (
@@ -86,10 +131,18 @@ export default function AdminUsersPage() {
                       {new Date(user.createdAt).toLocaleDateString()}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap justify-end">
                     <Badge variant={user.isApproved ? "default" : "secondary"}>
                       {user.isApproved ? "Approved" : "Pending"}
                     </Badge>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleResetPassword(user.id)}
+                      disabled={actionLoading === user.id + "reset"}
+                    >
+                      {actionLoading === user.id + "reset" ? "Resetting…" : "Reset Password"}
+                    </Button>
                     {!user.isApproved && (
                       <>
                         <Button
@@ -116,6 +169,33 @@ export default function AdminUsersPage() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog
+        open={resetDialog?.open ?? false}
+        onOpenChange={(open) => {
+          if (!open) setResetDialog(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Password Reset</DialogTitle>
+            <DialogDescription>
+              New temporary password for <strong>{resetDialog?.userName}</strong> (
+              {resetDialog?.userEmail}). Share this once — it won&apos;t be shown again.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Input
+              value={resetDialog?.tempPassword ?? ""}
+              readOnly
+              className="font-mono"
+            />
+            <Button onClick={handleCopy} className="w-full" variant={copied ? "outline" : "default"}>
+              {copied ? "✓ Copied" : "Copy to Clipboard"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

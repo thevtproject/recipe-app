@@ -28,7 +28,11 @@ export default async function EditRecipePage({
       defaultValues={{
         title: recipe.title,
         description: recipe.description ?? undefined,
-        category: recipe.category as 'BREAKFAST' | 'LUNCH' | 'DINNER',
+        notes: recipe.notes,
+        servings: recipe.servings,
+        prepTimeMin: recipe.prepTimeMin,
+        cookTimeMin: recipe.cookTimeMin,
+        categories: recipe.categories,
         photoUrl: recipe.photoUrl,
         steps: recipe.steps as Step[],
       }}
