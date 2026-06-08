@@ -18,6 +18,7 @@ certbot/cloudflare.ini
 df0afd2f-*.json
 # Cloudflare config that contains tunnel ID
 cloudflared-config.yml
+cloudflared/
 
 # Build artifacts
 *.tsbuildinfo

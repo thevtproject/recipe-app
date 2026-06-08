@@ -23,10 +23,7 @@ COPY . .
 RUN npx prisma generate
 # Compile seed script to plain JS (no tsx needed at runtime)
 RUN npx tsc prisma/seed.ts --outDir prisma-compiled --esModuleInterop --target ES2020 --module commonjs --skipLibCheck --moduleResolution node
-# Build Next.js
-ARG NEXTAUTH_SECRET
-ARG NEXTAUTH_URL
-ARG DATABASE_URL
+# Build Next.js. Runtime secrets are injected by docker-compose, not at build time.
 RUN npm run build
 
 # ---- runner stage ----

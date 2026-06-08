@@ -11,10 +11,26 @@ if [ ! -f .env ]; then
   exit 1
 fi
 
-# Check tunnel token is filled in
-if grep -q "changeme_paste_tunnel_token_here" .env 2>/dev/null; then
+# Check Cloudflare tunnel settings are present without sourcing .env
+# (sourcing would execute shell syntax if a value is malformed).
+get_env_value() {
+  local key="$1"
+  grep -E "^${key}=" .env 2>/dev/null | tail -n 1 | cut -d= -f2-
+}
+
+CLOUDFLARE_TUNNEL_TOKEN_VALUE="$(get_env_value CLOUDFLARE_TUNNEL_TOKEN)"
+CLOUDFLARED_CONFIG_DIR_VALUE="$(get_env_value CLOUDFLARED_CONFIG_DIR)"
+NEXTAUTH_URL_VALUE="$(get_env_value NEXTAUTH_URL)"
+
+if [ -z "$CLOUDFLARE_TUNNEL_TOKEN_VALUE" ] || [ "$CLOUDFLARE_TUNNEL_TOKEN_VALUE" = "<generate from: cloudflared tunnel token recipe-app>" ]; then
   echo "ERROR: CLOUDFLARE_TUNNEL_TOKEN not set in .env."
   echo "Get token with: cloudflared tunnel token recipe-app"
+  exit 1
+fi
+
+if [ -z "$CLOUDFLARED_CONFIG_DIR_VALUE" ]; then
+  echo "ERROR: CLOUDFLARED_CONFIG_DIR not set in .env."
+  echo "Set it to the host directory containing cloudflared config.yml and tunnel credentials JSON."
   exit 1
 fi
 
@@ -48,7 +64,7 @@ docker compose exec -T -u nextjs -e SEED_ADMIN_EMAIL -e SEED_ADMIN_PASSWORD -e S
 echo ""
 echo "==> ✅ Deployment complete!"
 echo ""
-echo "    App:    ${NEXTAUTH_URL:-https://<your-domain>}"
+echo "    App:    ${NEXTAUTH_URL_VALUE:-https://<your-domain>}"
 echo "    Status: docker compose ps"
 echo "    Logs:   docker compose logs -f app"
 echo "    Tunnel: docker compose logs -f cloudflared"
