@@ -7,9 +7,9 @@ Gemini, Cursor, Codex) reads this to get oriented.
 Private family recipe webapp. Closed user system (admin approval required).
 Weekly meal planner per user (or per household).
 
-**Live at:** https://recipes.vtproject.my.id
-**Repo:** /home/andryan/recipe-app
-**Server:** `icon.local` (LAN 192.168.1.215, behind CGNAT)
+**Live at:** https://<your-domain>
+**Repo:** <repo-root>
+**Server:** `<server-hostname>` (LAN <server-ip>, behind CGNAT)
 
 ## Goals
 1. Recipe library — multi-category filter, food photos, step-by-step

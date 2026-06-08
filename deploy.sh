@@ -40,15 +40,15 @@ echo "==> Waiting for DB to be healthy..."
 sleep 10
 
 echo "==> Running Prisma migration..."
-docker compose exec -T -u root -e DATABASE_URL app node node_modules/prisma/build/index.js migrate deploy
+docker compose exec -T -u nextjs -e DATABASE_URL app node node_modules/prisma/build/index.js migrate deploy
 
 echo "==> Seeding admin user..."
-docker compose exec -T -u root -e SEED_ADMIN_EMAIL -e SEED_ADMIN_PASSWORD -e SEED_ADMIN_NAME app node /app/prisma-compiled/seed.js || echo "(seed skipped if admin exists)"
+docker compose exec -T -u nextjs -e SEED_ADMIN_EMAIL -e SEED_ADMIN_PASSWORD -e SEED_ADMIN_NAME app node /app/prisma-compiled/seed.js || echo "(seed skipped if admin exists)"
 
 echo ""
 echo "==> ✅ Deployment complete!"
 echo ""
-echo "    App:    https://recipes.vtproject.my.id"
+echo "    App:    ${NEXTAUTH_URL:-https://<your-domain>}"
 echo "    Status: docker compose ps"
 echo "    Logs:   docker compose logs -f app"
 echo "    Tunnel: docker compose logs -f cloudflared"
