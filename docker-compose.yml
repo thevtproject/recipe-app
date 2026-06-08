@@ -41,6 +41,31 @@ services:
       db:
         condition: service_healthy
 
+  app-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+        NEXTAUTH_URL: ${DEV_NEXTAUTH_URL:-https://dev.recipes.vtproject.my.id}
+        DATABASE_URL: ${DATABASE_URL}
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      NEXTAUTH_URL: ${DEV_NEXTAUTH_URL:-https://dev.recipes.vtproject.my.id}
+      UPLOAD_DIR: /app/public/uploads
+      NODE_ENV: production
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      RESEND_FROM: ${RESEND_FROM}
+    volumes:
+      - uploads:/app/public/uploads
+    networks:
+      - internal
+    depends_on:
+      db:
+        condition: service_healthy
+
   nginx:
     image: nginx:alpine
     restart: unless-stopped
