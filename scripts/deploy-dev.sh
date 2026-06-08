@@ -9,8 +9,15 @@ cd "$(dirname "$0")/.."
 git checkout dev
 git pull origin dev
 
+# Ensure dev database container is running
+docker compose up -d db-dev
+
 # Build the dev image
 docker compose build app-dev
+
+# Run migrations against the separate dev database
+echo "Running migrations against dev database..."
+docker compose run --rm migrate-dev
 
 # Stop & remove old dev container
 docker stop recipe-app-app-dev-1 2>/dev/null || true
