@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # ---- deps stage ----
-FROM node:20-alpine AS deps
+FROM node:26-alpine AS deps
 WORKDIR /app
 # sharp on Alpine needs libvips headers at install time so npm can either
 # link the prebuilt musl binary against system vips or build from source.
@@ -12,7 +12,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --ignore-scripts
 
 # ---- builder stage ----
-FROM node:20-alpine AS builder
+FROM node:26-alpine AS builder
 WORKDIR /app
 # Same vips requirement as the deps stage for the full dev install + build.
 RUN apk add --no-cache vips-dev
@@ -27,7 +27,7 @@ RUN npx tsc prisma/seed.ts --outDir prisma-compiled --esModuleInterop --target E
 RUN npm run build
 
 # ---- runner stage ----
-FROM node:20-alpine AS runner
+FROM node:26-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
