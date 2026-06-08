@@ -175,7 +175,6 @@ export default async function RecipeDetailPage({
           )}
         </div>
       </div>
-
       {/* Photo */}
       {recipe.photoUrl && (
         <div className="aspect-[16/9] rounded-lg overflow-hidden bg-muted">
@@ -186,7 +185,6 @@ export default async function RecipeDetailPage({
           />
         </div>
       )}
-
       {/* Header */}
       <div className="space-y-2">
         {recipe.categories[0] && (
@@ -242,7 +240,6 @@ export default async function RecipeDetailPage({
           </div>
         )}
       </div>
-
       {/* Start Cooking */}
       {steps.length > 0 && (
         <Link
@@ -253,7 +250,6 @@ export default async function RecipeDetailPage({
           Start Cooking
         </Link>
       )}
-
       {/* Ingredients */}
       {ingredients.length > 0 && (
         <RecipeIngredients
@@ -261,10 +257,8 @@ export default async function RecipeDetailPage({
           originalServings={recipe.servings}
         />
       )}
-
       {/* Steps */}
       <RecipeSteps steps={steps} />
-
       {/* Chef's notes */}
       {recipe.notes && (
         <div className="rounded-lg border border-border bg-muted/40 p-4 space-y-1">
@@ -272,7 +266,6 @@ export default async function RecipeDetailPage({
           <p className="text-sm whitespace-pre-line">{recipe.notes}</p>
         </div>
       )}
-
       {/* Ratings */}
       <div className="space-y-3">
         <h2 className="text-lg font-medium">Ratings & reviews</h2>
@@ -283,7 +276,6 @@ export default async function RecipeDetailPage({
           ratings={ratingRows}
         />
       </div>
-
       {/* Cook History */}
       {totalCooks > 0 && (
         <Card>
