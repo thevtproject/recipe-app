@@ -104,7 +104,7 @@ services:
     restart: unless-stopped
     command: tunnel --no-autoupdate --config /etc/cloudflared/config.yml run
     volumes:
-      - /home/andryan/.cloudflared:/etc/cloudflared:ro
+      - ${CLOUDFLARED_CONFIG_DIR:-./cloudflared}:/etc/cloudflared:ro
     networks:
       - internal
     depends_on:
