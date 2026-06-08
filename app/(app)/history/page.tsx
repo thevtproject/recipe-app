@@ -142,7 +142,6 @@ export default function HistoryPage() {
             : 'Everything you have cooked, newest first.'}
         </p>
       </div>
-
       {/* Scope toggle (only meaningful when in a household) */}
       {actualScope === 'HOUSEHOLD' && (
         <div className="flex gap-1 p-1 rounded-lg bg-muted w-fit">
@@ -172,7 +171,6 @@ export default function HistoryPage() {
           </button>
         </div>
       )}
-
       {/* Filters */}
       <div className="rounded-lg border border-border bg-card p-4 space-y-3">
         {/* Date presets */}
@@ -253,17 +251,14 @@ export default function HistoryPage() {
           )}
         </div>
       </div>
-
       {loading && (
         <div className="text-sm text-muted-foreground py-12 text-center">
           Loading history…
         </div>
       )}
-
       {error && (
         <div className="text-sm text-red-600 py-12 text-center">{error}</div>
       )}
-
       {!loading && !error && entries.length === 0 && (
         <div className="rounded-lg border border-dashed border-border py-16 text-center">
           <Utensils className="mx-auto mb-3 text-muted-foreground" size={32} />
@@ -291,7 +286,6 @@ export default function HistoryPage() {
           )}
         </div>
       )}
-
       {!loading && !error && entries.length > 0 && (
         <>
           <p className="text-xs text-muted-foreground">
@@ -310,11 +304,11 @@ export default function HistoryPage() {
                 <div className="flex-shrink-0 w-14 h-14 rounded-md overflow-hidden bg-muted flex items-center justify-center">
                   {c.recipe.photoUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img
+                    (<img
                       src={c.recipe.photoUrl}
                       alt={c.recipe.title}
                       className="w-full h-full object-cover"
-                    />
+                    />)
                   ) : (
                     <Utensils size={20} className="text-muted-foreground" />
                   )}

@@ -217,7 +217,6 @@ export default async function DashboardPage() {
           What are we cooking this week?
         </p>
       </div>
-
       {/* Empty state — fresh household, no recipes at all */}
       {!hasAnyContent && (
         <Card>
@@ -236,7 +235,6 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       )}
-
       {/* Stats row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <StatCard
@@ -260,7 +258,6 @@ export default async function DashboardPage() {
           icon={<Calendar size={16} />}
         />
       </div>
-
       {/* Cook Streak */}
       {allCooks.length > 0 && (
         <Card className="bg-gradient-to-r from-orange-50 to-amber-50 border-orange-200">
@@ -295,7 +292,6 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       )}
-
       {/* This Week's Plan */}
       {weekPlans.length > 0 && (
         <Section
@@ -357,7 +353,6 @@ export default async function DashboardPage() {
           </div>
         </Section>
       )}
-
       {/* Cook Again */}
       {cookAgain.length > 0 && (
         <Section
@@ -376,11 +371,11 @@ export default async function DashboardPage() {
                   <div className="aspect-[4/3] bg-muted overflow-hidden">
                     {r.photoUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img
+                      (<img
                         src={r.photoUrl}
                         alt={r.title}
                         className="w-full h-full object-cover"
-                      />
+                      />)
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-3xl select-none">
                         🍽
@@ -413,7 +408,6 @@ export default async function DashboardPage() {
           </div>
         </Section>
       )}
-
       {/* Recent Cooks */}
       {recentCooks.length > 0 && (
         <Section

@@ -27,9 +27,6 @@ RUN npx tsc prisma/seed.ts --outDir prisma-compiled --esModuleInterop --target E
 ARG NEXTAUTH_SECRET
 ARG NEXTAUTH_URL
 ARG DATABASE_URL
-ENV NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
-ENV NEXTAUTH_URL=${NEXTAUTH_URL}
-ENV DATABASE_URL=${DATABASE_URL}
 RUN npm run build
 
 # ---- runner stage ----

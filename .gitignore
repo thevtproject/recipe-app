@@ -31,3 +31,23 @@ docs/plans/
 docs/qa-security-report-*.md
 docs/recipe-book-promo.*
 progress.md
+
+# Environment variations — prevent any local env from leaking
+.env.production
+.env.development
+.env.test
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Dependencies — safety net
+node_modules/
+
+# Build
+dist/
+build/
