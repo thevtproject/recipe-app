@@ -12,6 +12,7 @@ import {
   MessageCircle,
   Copy,
   Check,
+  ShoppingCart,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { RecipePicker } from './RecipePicker';
@@ -179,7 +180,7 @@ export function WeeklyPlanner() {
       const res = await fetch('/api/meal-plans/share', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ from, until, scope: 'ME', ttlDays: 30 }),
+        body: JSON.stringify({ from, until, scope, ttlDays: 30 }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json?.error ?? 'Failed to create share link');
@@ -284,6 +285,14 @@ export function WeeklyPlanner() {
         </Button>
 
         <div className="ml-auto flex items-center gap-1">
+          <Link
+            href={`/shopping-list?from=${from}&until=${until}&scope=${scope}`}
+            className="inline-flex items-center justify-center gap-1 whitespace-nowrap rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+            title="Generate shopping list from this week"
+          >
+            <ShoppingCart size={14} />
+            <span className="hidden sm:inline">Shopping list</span>
+          </Link>
           {shareUrl ? (
             <div className="flex items-center gap-1">
               <input

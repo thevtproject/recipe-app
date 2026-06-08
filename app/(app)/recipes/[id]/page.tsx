@@ -11,6 +11,7 @@ import { RecipeIngredients } from '@/components/recipe/RecipeIngredients';
 import { RecipeSteps } from '@/components/recipe/RecipeSteps';
 import { RatingWidget } from '@/components/recipe/RatingWidget';
 import { CookedButton } from '@/components/recipe/CookedButton';
+import { ShareRecipeButton } from '@/components/recipe/ShareRecipeButton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
@@ -157,6 +158,7 @@ export default async function RecipeDetailPage({
             recipeId={recipe.id}
             myLastCookedAt={myLastCooked?.cookedAt.toISOString() ?? null}
           />
+          <ShareRecipeButton recipeId={recipe.id} recipeTitle={recipe.title} />
           <Link
             href={`/recipes/new?from=${recipe.id}`}
             className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'gap-1')}

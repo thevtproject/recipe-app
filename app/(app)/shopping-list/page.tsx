@@ -1,6 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { ShoppingCart, Printer, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -77,14 +78,31 @@ function itemKey(name: string, unit: string | null): string {
 }
 
 export default function ShoppingListPage() {
+  return (
+    <Suspense fallback={<div className="py-12 text-center text-sm text-muted-foreground">Loading shopping list…</div>}>
+      <ShoppingListInner />
+    </Suspense>
+  );
+}
+
+function ShoppingListInner() {
+  const searchParams = useSearchParams();
   const { data: session } = useSession();
   const householdId = (session?.user as { householdId?: string | null } | undefined)?.householdId ?? null;
   const canUseFamily = !!householdId;
 
-  const [monday, setMonday] = useState<Date>(() => getMonday(new Date()));
-  const [from, setFrom] = useState<string>(() => fmtDate(getMonday(new Date())));
-  const [until, setUntil] = useState<string>(() => fmtDate(addDays(getMonday(new Date()), 6)));
-  const [scope, setScope] = useState<'ME' | 'FAMILY'>('ME');
+  const queryFrom = searchParams.get('from');
+  const queryUntil = searchParams.get('until');
+  const queryScope = searchParams.get('scope')?.toUpperCase();
+  const initialMonday = getMonday(new Date());
+  const initialFrom = queryFrom && /^\d{4}-\d{2}-\d{2}$/.test(queryFrom) ? queryFrom : fmtDate(initialMonday);
+  const initialUntil = queryUntil && /^\d{4}-\d{2}-\d{2}$/.test(queryUntil) ? queryUntil : fmtDate(addDays(initialMonday, 6));
+  const initialScope = queryScope === 'FAMILY' ? 'FAMILY' : 'ME';
+
+  const [monday, setMonday] = useState<Date>(() => getMonday(new Date(initialFrom)));
+  const [from, setFrom] = useState<string>(initialFrom);
+  const [until, setUntil] = useState<string>(initialUntil);
+  const [scope, setScope] = useState<'ME' | 'FAMILY'>(initialScope);
 
   const [data, setData] = useState<ShoppingData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -204,10 +222,10 @@ export default function ShoppingListPage() {
 
   // If user is not in a household, force scope to ME
   useEffect(() => {
-    if (!canUseFamily && scope === 'FAMILY') {
+    if (session?.user && !canUseFamily && scope === 'FAMILY') {
       setScope('ME');
     }
-  }, [canUseFamily, scope]);
+  }, [canUseFamily, scope, session?.user]);
 
   return (
     <>
