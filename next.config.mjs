@@ -54,6 +54,7 @@ const nextConfig = {
               "script-src 'self' 'unsafe-inline'",
               "font-src 'self' data:",
               "connect-src 'self'",
+              "worker-src 'self'",
               "frame-ancestors 'self'",
               "base-uri 'self'",
               "form-action 'self'",
