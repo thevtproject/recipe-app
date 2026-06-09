@@ -4,6 +4,7 @@ import "./globals.css";
 import SessionProvider from "@/components/providers/SessionProvider";
 import PWARegister from "@/components/PWARegister";
 import PWAUpdatePrompt from "@/components/PWAUpdatePrompt";
+import OfflineIndicator from "@/components/OfflineIndicator";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -41,6 +42,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <SessionProvider>
+          <OfflineIndicator />
           <PWARegister />
           <PWAUpdatePrompt />
           {children}
