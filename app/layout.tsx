@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import SessionProvider from "@/components/providers/SessionProvider";
 import PWARegister from "@/components/PWARegister";
+import PWAUpdatePrompt from "@/components/PWAUpdatePrompt";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -41,6 +42,7 @@ export default function RootLayout({
       >
         <SessionProvider>
           <PWARegister />
+          <PWAUpdatePrompt />
           {children}
         </SessionProvider>
       </body>
