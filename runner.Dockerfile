@@ -11,4 +11,8 @@ RUN mkdir -p /usr/local/lib/docker/cli-plugins && \
 RUN mkdir -p /home/runner/_work /home/runner/_work/_tool /home/runner/_work/_temp && \
     chown -R runner:runner /home/runner/_work /home/runner/_work/_tool /home/runner/_work/_temp
 
+# Add runner user to docker GID 110 (matches host docker group)
+RUN groupadd -g 110 docker-host && \
+    usermod -aG docker-host runner
+
 USER runner
