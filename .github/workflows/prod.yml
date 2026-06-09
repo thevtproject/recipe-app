@@ -1,29 +1,37 @@
-name: Deploy Production
+name: Deploy Prod
 
 on:
-  pull_request:
-    types: [closed]
+  push:
     branches: [master]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
 
 jobs:
   deploy:
     name: Build & Deploy to Production
-    if: github.event.pull_request.merged == true
-    runs-on: self-hosted
+    runs-on: [self-hosted, linux, x64, icon-local]
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: TypeScript check
+        run: |
+          docker compose run --rm -w /app \
+            -e DATABASE_URL \
+            migrate-dev npx tsc --noEmit
 
       - name: Build prod image
         run: |
           docker compose build app
 
-      - name: Stop & remove old prod container
+      - name: Run database migrations
         run: |
-          docker stop recipe-app-app-1 2>/dev/null || true
-          docker rm recipe-app-app-1 2>/dev/null || true
+          docker compose run --rm migrate node /app/node_modules/prisma/build/index.js migrate deploy
 
-      - name: Start new prod container
+      - name: Deploy
         run: |
           docker compose up -d app
 
@@ -33,6 +41,6 @@ jobs:
 
       - name: Verify prod is serving
         run: |
-          sleep 3
+          sleep 5
           curl -sL -o /dev/null -w "Prod HTTP status: %{http_code}\n" \
             https://recipes.vtproject.my.id
