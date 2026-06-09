@@ -17,11 +17,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Copy env files from host
+        run: |
+          if [ -f /host-repo/.env.prod ]; then
+            cp /host-repo/.env.prod .env.prod
+          else
+            touch .env.prod
+          fi
+
       - name: TypeScript check
         run: |
           docker compose run --rm -w /app \
             -e DATABASE_URL \
-            migrate-dev npx tsc --noEmit
+            migrate-dev npx --package typescript tsc --noEmit
 
       - name: Build prod image
         run: |
