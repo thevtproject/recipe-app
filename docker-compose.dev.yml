@@ -1,0 +1,10 @@
+# Dev environment override — use with: docker compose -f docker-compose.yml -f docker-compose.dev.yml
+services:
+  db-dev:
+    env_file: .env.dev
+
+  app-dev:
+    env_file: .env.dev
+
+  migrate-dev:
+    env_file: .env.dev

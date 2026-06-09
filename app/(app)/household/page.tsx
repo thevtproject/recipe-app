@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import {
@@ -13,6 +14,8 @@ import {
   KeyRound,
   Camera,
   Share2,
+  CalendarDays,
+  ShoppingCart,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -246,6 +249,34 @@ function HouseholdInner() {
               </p>
             </div>
           </div>
+        </div>
+
+        {/* Family shortcuts */}
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Link
+            href="/planner"
+            className="rounded-lg border border-border bg-card p-4 hover:bg-muted/40 transition-colors"
+          >
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <CalendarDays size={16} className="text-primary" />
+              Plan family meals
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Switch to Family week in the planner to coordinate meals together.
+            </p>
+          </Link>
+          <Link
+            href="/shopping-list?scope=FAMILY"
+            className="rounded-lg border border-border bg-card p-4 hover:bg-muted/40 transition-colors"
+          >
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <ShoppingCart size={16} className="text-primary" />
+              Family shopping list
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Generate groceries from everyone’s planned family meals.
+            </p>
+          </Link>
         </div>
 
         {/* Members */}

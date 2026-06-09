@@ -1,5 +1,6 @@
+import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 
 type MealPlan = {
   date: Date;
@@ -36,6 +37,10 @@ export default async function SharedPlanPage({
   params: Promise<{ token: string }>;
 }) {
   const { token } = await params;
+  const session = await auth();
+  if (!session?.user) {
+    redirect(`/login?callbackUrl=${encodeURIComponent(`/planner/share/${token}`)}`);
+  }
 
   const share = await prisma.planShare.findUnique({ where: { token } });
   if (!share || !share.expiresAt || share.expiresAt < new Date()) {
