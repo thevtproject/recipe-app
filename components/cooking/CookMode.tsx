@@ -42,13 +42,18 @@ export function CookMode({
   ingredients,
   totalMinutes,
 }: CookModeProps) {
-  const { start, timers } = useTimer();
+  const { start, pause, remove, timers } = useTimer();
   const [currentStep, setCurrentStep] = useState(0);
   const [showIngredients, setShowIngredients] = useState(false);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const [elapsedSec, setElapsedSec] = useState(0);
   const [cookStarted, setCookStarted] = useState(false);
   const elapsedRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Track started timers by step order so we don't re-spawn on re-renders.
+  const startedTimersRef = useRef<Set<number>>(new Set());
+  // Track timer IDs per step so we can clean up when navigating away.
+  const timerIdsRef = useRef<Map<number, string>>(new Map());
+
   const sortedSteps = useMemo(
     () => steps.slice().sort((a, b) => a.order - b.order),
     [steps],
@@ -70,20 +75,27 @@ export function CookMode({
     }
   }, [cookStarted]);
 
-  // Track which steps already have auto-started timers (ref, so it never
-  // causes re-renders and survives dependency-skip lint).
-  const startedTimersRef = useRef<Set<number>>(new Set());
-
   // Auto-start the current step's timer when the step changes.
-  // Only fires on step navigation — NOT on timer state changes — so pausing
-  // or finishing a timer never accidentally re-spawns it.
+  // Also clean up any previous step's timer so the dock doesn't accumulate.
   useEffect(() => {
     if (!step || !step.durationSec) return;
     if (startedTimersRef.current.has(step.order)) return;
     startedTimersRef.current.add(step.order);
-    start(`Step ${step.order}`, step.durationSec);
+    const id = start(`Step ${step.order}`, step.durationSec);
+    if (id) timerIdsRef.current.set(step.order, id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentStep]);
+
+  // When currentStep changes, remove any timer from a previous step that is
+  // no longer visible — keeps the dock from piling up timer cards.
+  useEffect(() => {
+    for (const [stepOrder, tid] of timerIdsRef.current.entries()) {
+      if (stepOrder !== step?.order && tid) {
+        remove(tid);
+        timerIdsRef.current.delete(stepOrder);
+      }
+    }
+  }, [currentStep, remove, step?.order]);
 
   // Cleanup elapsed timer on unmount
   useEffect(() => {
