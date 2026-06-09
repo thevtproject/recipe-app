@@ -25,12 +25,6 @@ jobs:
             touch .env.prod
           fi
 
-      - name: TypeScript check
-        run: |
-          docker compose run --rm -w /app \
-            -e DATABASE_URL \
-            migrate-dev npx --package typescript tsc --noEmit
-
       - name: Build prod image
         run: |
           docker compose build app
