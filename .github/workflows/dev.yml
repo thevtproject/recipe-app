@@ -7,10 +7,15 @@ on:
 jobs:
   deploy:
     name: Build & Deploy to Dev
-    runs-on: self-hosted
+    runs-on: [self-hosted, linux, x64, icon-local]
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Create env files for docker compose
+        run: |
+          # .env files are gitignored — docker compose needs them to exist
+          touch .env.dev .env.prod
 
       - name: TypeScript check
         run: |
