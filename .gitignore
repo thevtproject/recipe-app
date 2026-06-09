@@ -1,6 +1,9 @@
 node_modules
 .next
+# Environment files — one per environment, never committed
 .env
+.env.prod
+.env.dev
 .env.local
 public/uploads/*.jpg
 public/uploads/*.jpeg
