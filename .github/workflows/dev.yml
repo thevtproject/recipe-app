@@ -12,10 +12,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Create env files for docker compose
+      - name: Copy env files from host
         run: |
-          # .env files are gitignored — docker compose needs them to exist
-          touch .env.dev .env.prod
+          # .env files are gitignored — copy from host-repo mount
+          if [ -f /host-repo/.env.dev ]; then
+            cp /host-repo/.env.dev .env.dev
+          else
+            touch .env.dev
+          fi
+          if [ -f /host-repo/.env.prod ]; then
+            cp /host-repo/.env.prod .env.prod
+          else
+            touch .env.prod
+          fi
 
       - name: TypeScript check
         run: |
