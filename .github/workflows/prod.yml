@@ -1,0 +1,38 @@
+name: Deploy Production
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [master]
+
+jobs:
+  deploy:
+    name: Build & Deploy to Production
+    if: github.event.pull_request.merged == true
+    runs-on: self-hosted
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build prod image
+        run: |
+          docker compose build app
+
+      - name: Stop & remove old prod container
+        run: |
+          docker stop recipe-app-app-1 2>/dev/null || true
+          docker rm recipe-app-app-1 2>/dev/null || true
+
+      - name: Start new prod container
+        run: |
+          docker compose up -d app
+
+      - name: Reload nginx (flush DNS cache)
+        run: |
+          docker exec recipe-app-nginx-1 nginx -s reload 2>/dev/null || true
+
+      - name: Verify prod is serving
+        run: |
+          sleep 3
+          curl -sL -o /dev/null -w "Prod HTTP status: %{http_code}\n" \
+            https://recipes.vtproject.my.id
