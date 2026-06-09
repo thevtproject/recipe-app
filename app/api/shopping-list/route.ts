@@ -245,11 +245,12 @@ export async function GET(req: NextRequest) {
           if (!entry.display.has(unitKey)) entry.display.set(unitKey, parsed.display);
         }
       } else {
-        // free-form amount like "to taste", "a handful"
+        // free-form amount like "to taste", "a handful", or range text
         const unitKey = '__text__';
-        // For "a pinch" with unit="pinch", readAmount returns the unit so it
-        // is summed above. Otherwise amount is null and we have nothing to sum.
-        const display = ing.unit ? ing.unit : '—';
+        // If there's a note (e.g. "2-3" for a range), show it with the unit
+        const display = ing.note
+          ? (ing.unit ? `${ing.note} ${ing.unit}` : ing.note)
+          : (ing.unit ? ing.unit : '—');
         if (!entry.display.has(unitKey)) entry.display.set(unitKey, display);
       }
     }

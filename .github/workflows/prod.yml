@@ -1,0 +1,48 @@
+name: Deploy Prod
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build & Deploy to Production
+    runs-on: [self-hosted, linux, x64, icon-local]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Copy env files from host
+        run: |
+          if [ -f /host-repo/.env.prod ]; then
+            cp /host-repo/.env.prod .env.prod
+          else
+            touch .env.prod
+          fi
+
+      - name: Build prod image
+        run: |
+          docker compose build app
+
+      - name: Run database migrations
+        run: |
+          docker compose run --rm migrate node /app/node_modules/prisma/build/index.js migrate deploy
+
+      - name: Deploy
+        run: |
+          docker compose up -d app
+
+      - name: Reload nginx (flush DNS cache)
+        run: |
+          docker exec recipe-app-nginx-1 nginx -s reload 2>/dev/null || true
+
+      - name: Verify prod is serving
+        run: |
+          sleep 5
+          curl -sL -o /dev/null -w "Prod HTTP status: %{http_code}\n" \
+            https://recipes.vtproject.my.id

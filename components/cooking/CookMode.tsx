@@ -13,7 +13,6 @@ import {
 } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { useTimer } from '@/components/timer/TimerProvider';
 import type { Ingredient } from '@/types/ingredient';
 import { formatAmount, pluralizeUnit } from '@/types/ingredient';
 import type { RecipeStep } from '@/components/recipe/RecipeSteps';
@@ -35,6 +34,60 @@ function formatDuration(sec: number): string {
   return rem === 0 ? `${h}h` : `${h}h ${rem}m`;
 }
 
+// ⏰ Timer notification — chime + browser notification + tab title flash
+function announceTimerDone(label: string) {
+  if (typeof window === 'undefined') return;
+  try {
+    const Ctx =
+      (window as unknown as { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext })
+        .AudioContext ||
+      (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (Ctx) {
+      const ctx = new Ctx();
+      const beep = (atMs: number, freq: number) => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.frequency.value = freq;
+        o.type = 'sine';
+        g.gain.setValueAtTime(0.0001, ctx.currentTime + atMs / 1000);
+        g.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + atMs / 1000 + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + atMs / 1000 + 0.45);
+        o.connect(g);
+        g.connect(ctx.destination);
+        o.start(ctx.currentTime + atMs / 1000);
+        o.stop(ctx.currentTime + atMs / 1000 + 0.5);
+      };
+      beep(0, 880);
+      beep(280, 660);
+      beep(560, 880);
+      setTimeout(() => ctx.close().catch(() => {}), 1500);
+    }
+  } catch {
+    // Audio is non-critical
+  }
+  try {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification('⏰ Timer done', { body: label, silent: false });
+    }
+  } catch {
+    // Notification is non-critical
+  }
+  try {
+    const orig = document.title;
+    document.title = `⏰ ${label} — done`;
+    setTimeout(() => { document.title = orig; }, 8000);
+  } catch {
+    // Tab title fallback is non-critical
+  }
+}
+
+type StepTimerState = {
+  totalSec: number;
+  remainingSec: number;
+  status: 'running' | 'done';
+  startedAt: number;
+};
+
 export function CookMode({
   recipeId,
   title,
@@ -42,13 +95,17 @@ export function CookMode({
   ingredients,
   totalMinutes,
 }: CookModeProps) {
-  const { start, timers } = useTimer();
   const [currentStep, setCurrentStep] = useState(0);
   const [showIngredients, setShowIngredients] = useState(false);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const [elapsedSec, setElapsedSec] = useState(0);
   const [cookStarted, setCookStarted] = useState(false);
   const elapsedRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Local step timer — no global TimerDock pollution
+  const [stepTimer, setStepTimer] = useState<StepTimerState | null>(null);
+  const doneAnnouncedRef = useRef(false);
+
   const sortedSteps = useMemo(
     () => steps.slice().sort((a, b) => a.order - b.order),
     [steps],
@@ -67,25 +124,68 @@ export function CookMode({
       elapsedRef.current = setInterval(() => {
         setElapsedSec((s) => s + 1);
       }, 1000);
+      // Request notification permission lazily
+      if (typeof window !== 'undefined' && 'Notification' in window) {
+        if (Notification.permission === 'default') {
+          Notification.requestPermission().catch(() => {});
+        }
+      }
     }
   }, [cookStarted]);
 
-  // Track which steps already have auto-started timers (ref, so it never
-  // causes re-renders and survives dependency-skip lint).
-  const startedTimersRef = useRef<Set<number>>(new Set());
-
   // Auto-start the current step's timer when the step changes.
-  // Only fires on step navigation — NOT on timer state changes — so pausing
-  // or finishing a timer never accidentally re-spawns it.
   useEffect(() => {
-    if (!step || !step.durationSec) return;
-    if (startedTimersRef.current.has(step.order)) return;
-    startedTimersRef.current.add(step.order);
-    start(`Step ${step.order}`, step.durationSec);
+    if (!step || !step.durationSec) {
+      setStepTimer(null);
+      return;
+    }
+    doneAnnouncedRef.current = false;
+    setStepTimer({
+      totalSec: step.durationSec,
+      remainingSec: step.durationSec,
+      status: 'running',
+      startedAt: Date.now(),
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentStep]);
 
-  // Cleanup elapsed timer on unmount
+  // Tick the local step timer — uses wall-clock elapsed for tab-sleep resilience
+  useEffect(() => {
+    if (!stepTimer || stepTimer.status !== 'running') return;
+    const id = setInterval(() => {
+      setStepTimer((prev) => {
+        if (!prev || prev.status !== 'running') return prev;
+        const elapsed = Math.floor((Date.now() - prev.startedAt) / 1000);
+        const remaining = Math.max(0, prev.totalSec - elapsed);
+        if (remaining === 0) {
+          return { ...prev, remainingSec: 0, status: 'done' };
+        }
+        return { ...prev, remainingSec: remaining };
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, [stepTimer?.status === 'running']);
+
+  // Announce when step timer reaches done
+  useEffect(() => {
+    if (stepTimer?.status === 'done' && !doneAnnouncedRef.current) {
+      doneAnnouncedRef.current = true;
+      announceTimerDone(`Step ${step?.order || ''}`);
+    }
+  }, [stepTimer?.status, step?.order]);
+
+  // When all steps done, clear the step timer
+  useEffect(() => {
+    if (allDone) {
+      setStepTimer(null);
+      if (elapsedRef.current) {
+        clearInterval(elapsedRef.current);
+        elapsedRef.current = null;
+      }
+    }
+  }, [allDone]);
+
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (elapsedRef.current) clearInterval(elapsedRef.current);
@@ -157,13 +257,7 @@ export function CookMode({
     );
   }
 
-  // Check timer status for current step
-  const stepTimer = step?.durationSec
-    ? timers.find(
-        (t) =>
-          t.label === `Step ${step.order}` && t.totalSec === step.durationSec,
-      )
-    : null;
+  // Derive display values from local step timer
   const timerDisplay = stepTimer
     ? `${String(Math.floor(stepTimer.remainingSec / 60)).padStart(2, '0')}:${String(stepTimer.remainingSec % 60).padStart(2, '0')}`
     : null;
@@ -256,7 +350,7 @@ export function CookMode({
             </p>
           </div>
 
-          {/* Timer section */}
+          {/* Timer section — fully inline, no floating timer cards */}
           {step.durationSec && (
             <div className="text-center space-y-3 py-4 mb-4">
               {isTimerDone ? (
@@ -295,7 +389,12 @@ export function CookMode({
                   size="lg"
                   onClick={() => {
                     ensureStarted();
-                    start(`Step ${step.order}`, step.durationSec!);
+                    setStepTimer({
+                      totalSec: step.durationSec!,
+                      remainingSec: step.durationSec!,
+                      status: 'running',
+                      startedAt: Date.now(),
+                    });
                   }}
                   className="gap-2"
                 >
@@ -307,9 +406,7 @@ export function CookMode({
           )}
 
           {/* Navigation */}
-          {/* Navigation — padded so the fixed TimerDock (bottom-20 ~80px) 
-              doesn't hide the buttons */}
-          <div className="flex items-center justify-between gap-4 py-4 border-t border-[#D6CEC4] pb-24 md:pb-16 bg-[#F5F0EB]">
+          <div className="flex items-start justify-between gap-4 py-4 border-t border-[#D6CEC4] pb-8 bg-[#F5F0EB]">
             <Button
               type="button"
               variant="ghost"

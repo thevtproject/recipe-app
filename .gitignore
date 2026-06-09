@@ -1,6 +1,7 @@
 node_modules
 .next
 # Environment files — one per environment, never committed
+.env.runner
 .env
 .env.prod
 .env.dev

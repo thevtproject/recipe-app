@@ -192,6 +192,65 @@ export function formatIngredient(ing: Ingredient): string {
   return parts.join(' ').trim();
 }
 
+// Parse a free-form amount string (from the form's amount field) into a number.
+// Unlike parseLegacyAmount(), this doesn't try to extract the unit — it only
+// handles the numeric portion. Returns null when the input is unparseable
+// (e.g. "a pinch", "to taste", "").
+//
+// Handles:
+//   "2"         → 2
+//   "1,5"       → 1.5     (EU decimal)
+//   "1/2"       → 0.5     (fraction)
+//   "1 1/2"     → 1.5     (mixed fraction)
+//   "2-3"       → null    (range → unparseable, caller preserves text in note)
+//   "½"         → 0.5     (unicode fraction)
+//   "200g"      → null    (text suffix — caller should use unit field instead)
+//   "a pinch"   → null    (unparseable text)
+//   ""          → null    (empty)
+export function parseAmountString(raw: string): number | null {
+  const s = (raw ?? '').trim();
+  if (!s) return null;
+
+  // Unicode fraction map
+  const UNICODE_FRACTIONS: Record<string, number> = {
+    '¼': 0.25, '½': 0.5, '¾': 0.75,
+    '⅓': 1 / 3, '⅔': 2 / 3,
+    '⅛': 0.125, '⅜': 0.375, '⅝': 0.625, '⅞': 0.875,
+  };
+  if (UNICODE_FRACTIONS[s] !== undefined) return UNICODE_FRACTIONS[s];
+
+  // Range: "2-3" or "2 - 3" → amount can't be pinned precisely, return null
+  // so the caller preserves the original text in the note field.
+  const rangeMatch = s.match(/^(\d+(?:[.,]\d+)?)\s*[-–]\s*(\d+(?:[.,]\d+)?)$/);
+  if (rangeMatch) {
+    return null;
+  }
+
+  // Mixed fraction: "1 1/2" or "2 3/4"
+  const mixedMatch = s.match(/^(\d+)\s+(\d+)\/(\d+)$/);
+  if (mixedMatch) {
+    const w = parseInt(mixedMatch[1], 10);
+    const n = parseInt(mixedMatch[2], 10);
+    const d = parseInt(mixedMatch[3], 10);
+    if (d > 0) return w + n / d;
+  }
+
+  // Simple fraction: "1/2" or "3/4"
+  const fracMatch = s.match(/^(\d+)\/(\d+)$/);
+  if (fracMatch) {
+    const n = parseInt(fracMatch[1], 10);
+    const d = parseInt(fracMatch[2], 10);
+    if (d > 0) return n / d;
+  }
+
+  // Decimal (US or EU): "1.5" or "1,5"
+  const num = Number(s.replace(',', '.'));
+  if (Number.isFinite(num) && num >= 0) return num;
+
+  // Unparseable (text like "a pinch", "to taste", "200g" mixed)
+  return null;
+}
+
 // Return a scaled copy. amount=null lines are returned as-is ("to taste" etc.).
 export function scaleIngredient(ing: Ingredient, factor: number): Ingredient {
   if (ing.amount == null) return ing;

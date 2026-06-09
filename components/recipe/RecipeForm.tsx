@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Plus, Trash2, ArrowLeft, Timer } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Ingredient } from '@/types/ingredient';
-import { COMMON_UNITS } from '@/types/ingredient';
+import { COMMON_UNITS, parseAmountString } from '@/types/ingredient';
 
 type Step = { order: number; instruction: string; durationSec?: number | null };
 // Form-local shape: amount is a raw string from the input, parsed on submit.
@@ -178,14 +178,19 @@ export function RecipeForm({ mode, recipeId, defaultValues }: RecipeFormProps) {
             if (trimmed === '') {
               amount = null;
             } else {
-              const n = Number(trimmed.replace(',', '.'));
-              amount = Number.isFinite(n) && n >= 0 ? n : null;
+              // Use the robust parser that handles fractions, ranges, unicode
+              amount = parseAmountString(trimmed);
             }
+            // If the amount text is a range (e.g. "2-3"), the parser returns
+            // null since it can't be pinned precisely. Preserve the original
+            // text in the note so the display can show it.
+            const isRange = /^\d+(?:[.,]\d+)?\s*[-–]\s*\d+(?:[.,]\d+)?$/.test(trimmed);
+            const note = isRange ? trimmed : (i.note.trim() || null);
             return {
               amount,
               unit: i.unit.trim(),
               name: i.name.trim(),
-              note: i.note.trim() || null,
+              note,
             };
           }),
       };
@@ -327,7 +332,7 @@ export function RecipeForm({ mode, recipeId, defaultValues }: RecipeFormProps) {
         <div className="space-y-3">
           <Label>Ingredients</Label>
           <p className="text-xs text-muted-foreground -mt-2">
-            Amount is optional — leave blank for &quot;to taste&quot; / &quot;a pinch&quot;. Use commas for decimals (1,5 = 1.5).
+            Amount is optional — leave blank for &quot;to taste&quot; / &quot;a pinch&quot;. Supports fractions (½, 1/2, 1 1/2), EU decimals (1,5), and ranges (2-3).
           </p>
           {ingredients.map((ing, index) => (
             <div key={index} className="space-y-1.5">
@@ -371,11 +376,13 @@ export function RecipeForm({ mode, recipeId, defaultValues }: RecipeFormProps) {
                   <Trash2 size={14} />
                 </Button>
               </div>
-              {ing.note && (
-                <p className="text-xs text-muted-foreground pl-1">
-                  note: {ing.note}
-                </p>
-              )}
+              <Input
+                value={ing.note}
+                onChange={(e) => updateIngredient(index, 'note', e.target.value)}
+                placeholder="optional note (e.g. minced)"
+                className="text-xs text-muted-foreground mt-1"
+                aria-label={`Note for ingredient ${index + 1}`}
+              />
             </div>
           ))}
           <Button type="button" variant="outline" size="sm" onClick={addIngredient}>
