@@ -5,6 +5,7 @@ A warm, private family recipe web app with photo recipes, admin-approved account
 ![Next.js](https://img.shields.io/badge/Next.js-16-black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791)
+![License](https://img.shields.io/badge/License-MIT-green)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED)
 
 ## What it does
@@ -40,4 +41,4 @@ Core app phases are complete. Current work focuses on security hardening, stagin
 
 ## License
 
-See [`LICENSE`](LICENSE).
+[MIT](LICENSE) — see [`LICENSE`](LICENSE) for full text.
