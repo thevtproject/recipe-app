@@ -12,7 +12,7 @@ concurrency:
 jobs:
   deploy:
     name: Build & Deploy to Production
-    runs-on: [self-hosted, linux, x64, icon-local]
+    runs-on: [self-hosted, linux, x64]
 
     steps:
       - uses: actions/checkout@v4
@@ -45,4 +45,4 @@ jobs:
         run: |
           sleep 5
           curl -sL -o /dev/null -w "Prod HTTP status: %{http_code}\n" \
-            https://recipes.vtproject.my.id
+            https://<prod-domain>

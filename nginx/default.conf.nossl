@@ -1,6 +1,6 @@
 server {
     listen 80;
-    server_name recipes.thevtproject.my.id;
+    server_name <your-domain>;
 
     location /.well-known/acme-challenge/ {
         root /var/www/certbot;

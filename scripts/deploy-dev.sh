@@ -26,4 +26,4 @@ docker rm recipe-app-app-dev-1 2>/dev/null || true
 # Start new dev container
 docker compose --env-file .env.dev -f docker-compose.yml -f docker-compose.dev.yml up -d app-dev
 
-echo "=== Dev deployed: https://dev.vtproject.my.id ==="
+echo "=== Dev deployed: https://<dev-domain> ==="

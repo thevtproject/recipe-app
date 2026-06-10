@@ -37,6 +37,10 @@ docs/qa-security-report-*.md
 docs/recipe-book-promo.*
 progress.md
 
+# Security scan outputs
+trufflehog-report.json
+gitleaks-report.json
+
 # Environment variations — prevent any local env from leaking
 .env.production
 .env.development

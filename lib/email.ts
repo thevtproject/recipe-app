@@ -1,6 +1,6 @@
 import { Resend } from "resend";
 
-const FROM = process.env.RESEND_FROM ?? "noreply@vtproject.my.id";
+const FROM = process.env.RESEND_FROM ?? "noreply@<your-domain>";
 
 export async function sendPasswordResetEmail(opts: {
   to: string;

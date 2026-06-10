@@ -12,6 +12,6 @@ exec docker run -d \
   --name github-runner \
   --restart unless-stopped \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  -v /home/andryan/recipe-app:/host-repo:ro \
+  -v "${REPO_DIR:-/host-repo}":/host-repo:ro \
   recipe-app-runner:latest \
   /bin/bash -c "rm -f /home/runner/.credentials && ./config.sh --url https://github.com/thevtproject/recipe-app --token ${TOKEN} --name ${RN} --labels self-hosted,linux,x64,icon-local --unattended --replace && ./run.sh"

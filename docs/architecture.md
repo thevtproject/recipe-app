@@ -254,7 +254,7 @@ All static routes respect the auth middleware. When offline:
 ## Deploy Path (rebuild)
 
 ```
-cd /home/andryan/recipe-app
+cd ~/recipe-app
 docker compose build app        # rebuild image
 docker compose up -d app         # restart container
 docker compose logs -f app       # watch startup

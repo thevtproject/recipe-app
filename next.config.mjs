@@ -5,7 +5,7 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'vtproject.my.id',
+        hostname: '<your-domain>',
       },
     ],
     unoptimized: true,
