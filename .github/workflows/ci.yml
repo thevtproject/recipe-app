@@ -16,7 +16,20 @@ jobs:
       - run: npm run lint --if-present
       - run: npm run build
 
+  codeql:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+          queries: security-and-quality
+      - uses: github/codeql-action/analyze@v3
+
 # Manual repository hardening reminder:
 # Enable branch protection for master/main in GitHub Settings → Branches.
 # Recommended: require pull request reviews, dismiss stale approvals,
 # require CI status checks, and do not allow bypassing protection.
+# Enable secret scanning + push protection in Settings → Code security & analysis.
