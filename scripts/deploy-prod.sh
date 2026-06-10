@@ -19,4 +19,4 @@ docker rm recipe-app-app-1 2>/dev/null || true
 # Start new prod container
 docker compose --env-file .env.prod up -d app
 
-echo "=== Prod deployed: https://recipes.vtproject.my.id ==="
+echo "=== Prod deployed: https://<prod-domain> ==="

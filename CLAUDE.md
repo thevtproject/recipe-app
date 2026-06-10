@@ -5,7 +5,7 @@ Mirrors AGENTS.md with Claude Code CLI-specific notes. Read AGENTS.md first for 
 ## Quick Orient
 - Project: private family recipe webapp
 - Stack: Next.js 14 App Router + TypeScript + PostgreSQL + Prisma + Auth.js v5 + Tailwind + shadcn/ui
-- Root: /home/andryan/recipe-app/
+- Root: <project-root>
 - Current phase: see progress.md
 
 ## Claude Code Conventions

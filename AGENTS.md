@@ -126,7 +126,7 @@ recipe-app/
 - ✅ Cloudflare WAF + DDoS protection
 - ✅ Cloudflare Tunnel (no inbound port)
 - ✅ PostgreSQL on internal Docker network (no host port)
-- ✅ Rate limit on `/api/auth/register`: ⚠️ not implemented — see todo
+- ✅ Rate limit on all sensitive routes: ✅ Implemented (in-memory sliding window, 6 buckets: authRegister, authLogin, forgotPassword, upload, passwordChange, shareCreate, householdJoin)
 - ✅ CSRF: NextAuth built-in
 - ✅ HSTS: Cloudflare edge adds it externally
 - ✅ CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy: nginx

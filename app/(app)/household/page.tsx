@@ -34,7 +34,7 @@ type Household = {
 
 type JoinMode = 'code' | 'scan';
 
-const APP_URL = 'https://recipes.vtproject.my.id';
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://<your-domain>';
 
 export default function HouseholdPage() {
   return (
