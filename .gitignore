@@ -57,6 +57,14 @@ Thumbs.db
 # Dependencies — safety net
 node_modules/
 
+# Deploy ops — keep local only (public repo safety)
+.github/workflows/dev.yml
+.github/workflows/prod.yml
+scripts/deploy-dev.sh
+scripts/deploy-prod.sh
+scripts/start-runner.sh
+nginx/default.conf.nossl
+
 # Build
 dist/
 build/
