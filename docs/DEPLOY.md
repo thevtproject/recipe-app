@@ -206,7 +206,7 @@ cat backup_2026-06-04.sql | docker compose exec -T db psql -U recipe_user recipe
 
 ### Reset admin password
 ```bash
-docker compose exec -u root app node -e "
+docker compose exec -u nextjs app node -e "
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 const p = new PrismaClient();
@@ -246,7 +246,7 @@ docker builder prune -af  # Reclaim 5+ GB of stale buildx cache
 ### Migration fails: "User already exists"
 The seed has already run. Either ignore, or reset:
 ```bash
-docker compose exec -u root app node /app/prisma-compiled/seed.js
+docker compose exec -u nextjs app node /app/prisma-compiled/seed.js
 ```
 
 ---
