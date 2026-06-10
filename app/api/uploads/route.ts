@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
+import { processRecipeImage, PROCESSED_IMAGE_EXT } from '@/lib/images';
 
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 
@@ -56,12 +57,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ data: null, error: 'Only JPEG, PNG, WebP allowed' }, { status: 415 });
   }
 
-  const ext = ALLOWED_MIME[detectedMime];
+  const ext = PROCESSED_IMAGE_EXT;
   const filename = `${crypto.randomUUID()}.${ext}`;
+
+  // Re-encode via sharp: strips EXIF, enforces 1920px max, converts to WebP
+  let processed: Buffer;
+  try {
+    processed = await processRecipeImage(buf);
+  } catch (err) {
+    console.error('[upload] sharp processing failed', err);
+    return NextResponse.json({ data: null, error: 'Failed to process image' }, { status: 422 });
+  }
 
   const uploadDir = process.env.UPLOAD_DIR ?? join(process.cwd(), 'public', 'uploads');
   await mkdir(uploadDir, { recursive: true });
-  await writeFile(join(uploadDir, filename), buf);
+  await writeFile(join(uploadDir, filename), processed);
 
   return NextResponse.json({ data: { url: `/uploads/${filename}` }, error: null }, { status: 201 });
 }

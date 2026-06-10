@@ -1,12 +1,13 @@
 // QA seed — runs on host with project's node_modules. Uses DATABASE_URL from .env.
 import { config } from "dotenv";
-config({ path: "/home/andryan/recipe-app/.env" });
+import { resolve } from "path";
+config({ path: resolve(__dirname, "../.env") });
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 // Low rounds for speed during seed; rehashIfNeeded on first login bumps to 14.
 const HASH_ROUNDS = 4;
-const TEST_PASSWORD="QaAudit-7hX2p9!Qz";
+const TEST_PASSWORD = process.env.TEST_USER_PASSWORD || "QaAudit-7hX2p9!Qz";
 
 const prisma = new PrismaClient();
 const TEST_USERS = [

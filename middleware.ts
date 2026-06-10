@@ -19,7 +19,10 @@ export default auth((req) => {
     nextUrl.pathname.startsWith("/dashboard") ||
     nextUrl.pathname.startsWith("/recipes") ||
     nextUrl.pathname.startsWith("/profile") ||
-    nextUrl.pathname.startsWith("/favorites");
+    nextUrl.pathname.startsWith("/favorites") ||
+    nextUrl.pathname.startsWith("/shopping-list") ||
+    nextUrl.pathname.startsWith("/household") ||
+    nextUrl.pathname.startsWith("/history");
   // /planner/share/* is public (token-based access); other /planner routes are auth-gated
   const isPublicPlannerShare = /^\/planner\/share\/[^/]+$/.test(nextUrl.pathname);
   const isProtectedPlanner =

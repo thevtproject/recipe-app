@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  const baseUrl = process.env.NEXTAUTH_URL ?? "https://recipes.vtproject.my.id";
+  const baseUrl = process.env.NEXTAUTH_URL ?? "https://<your-domain>";
   const resetUrl = `${baseUrl}/reset-password?token=${rawToken}`;
 
   try {

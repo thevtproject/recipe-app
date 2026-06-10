@@ -1,7 +1,7 @@
 # Production Deployment Guide
 
-Domain: **recipes.vtproject.my.id**  
-Server: icon.local (192.168.1.215, Ubuntu, behind NAT, no public IP)  
+Domain: **<your-domain>**  
+Server: <server-hostname> (<server-ip>, behind NAT, no public IP)  
 Stack: Docker Compose + Nginx + Cloudflare Tunnel
 
 ---
@@ -10,7 +10,7 @@ Stack: Docker Compose + Nginx + Cloudflare Tunnel
 
 The home ISP assigns a **dynamic public IP** and the router has **no inbound port forwarding** (CGNAT in some ISPs blocks this). Certbot DNS-01 still works for cert issuance, but **traffic can't reach the server** without port forwarding.
 
-Cloudflare Tunnel solves both: an outbound-only `cloudflared` connection from the server to Cloudflare's edge, which then routes `recipes.vtproject.my.id` through that tunnel. No public IP, no port forwarding, free TLS at the edge.
+Cloudflare Tunnel solves both: an outbound-only `cloudflared` connection from the server to Cloudflare's edge, which then routes `<your-domain>` through that tunnel. No public IP, no port forwarding, free TLS at the edge.
 
 If you DO have a fixed public IP + port forwarding, you can revert to Certbot + open 80/443 — but this guide assumes the tunnel approach.
 
@@ -21,7 +21,7 @@ If you DO have a fixed public IP + port forwarding, you can revert to Certbot + 
 ### 1. Cloudflare Setup
 
 1. Create free account at [cloudflare.com](https://cloudflare.com)
-2. Add domain `vtproject.my.id` to Cloudflare
+2. Add domain `<your-domain>` to Cloudflare
 3. At Rumahweb, change nameservers to Cloudflare's (shown in CF dashboard after adding domain). Wait 1-24h for propagation.
 4. In Cloudflare dashboard, create a Tunnel:
    - Go to: Zero Trust → Networks → Tunnels
@@ -29,7 +29,7 @@ If you DO have a fixed public IP + port forwarding, you can revert to Certbot + 
    - Copy the **Tunnel Token** (long base64 string)
 5. Add a **Public Hostname** to the tunnel:
    - Subdomain: `recipes`
-   - Domain: `vtproject.my.id`
+   - Domain: `<your-domain>`
    - Service: `http://nginx:80` (or `http://localhost:80` if you prefer host-routed)
 
 ### 2. Server Setup
@@ -60,7 +60,7 @@ sudo usermod -aG docker $USER
 ### 1. Configure Environment
 
 ```bash
-cd /home/andryan/recipe-app
+cd ~/recipe-app
 cp .env.example .env
 nano .env
 ```
@@ -69,9 +69,9 @@ Required values:
 ```bash
 POSTGRES_PASSWORD=<generate strong password>
 NEXTAUTH_SECRET=<run: openssl rand -base64 48>
-NEXTAUTH_URL=https://recipes.vtproject.my.id
+NEXTAUTH_URL=https://<your-domain>
 CLOUDFLARE_TUNNEL_TOKEN=<paste token from step 1.4>
-SEED_ADMIN_EMAIL=admin@family.local
+SEED_ADMIN_EMAIL=<admin-email>
 SEED_ADMIN_PASSWORD=<your secure admin password>
 ```
 
@@ -93,7 +93,7 @@ tunnel: <tunnel-uuid>
 credentials-file: /etc/cloudflared/<tunnel-uuid>.json
 
 ingress:
-  - hostname: recipes.vtproject.my.id
+  - hostname: <your-domain>
     service: http://nginx:80
   - service: http_status:404
 ```
@@ -127,16 +127,16 @@ docker compose ps
 docker compose logs --tail=20 cloudflared
 # Look for: "registered tunnel connection" and "Connection established"
 
-curl -sI https://recipes.vtproject.my.id
+curl -sI https://<your-domain>
 # Expected: HTTP/2 307 → /login (when not logged in)
 ```
 
 ### 5. Access
 
-Open **https://recipes.vtproject.my.id** (from any device, anywhere).
+Open **https://<your-domain>** (from any device, anywhere).
 
 Login with:
-- Email: `admin@family.local`
+- Email: `<admin-email>`
 - Password: `SEED_ADMIN_PASSWORD` from `.env`
 
 ---
@@ -155,7 +155,7 @@ These are the things that WILL trip you up if you skip them:
 2. **Prisma engine files** — The runner image must COPY `.prisma`, `@prisma`, `prisma`, and `.bin` from the builder. Otherwise `prisma migrate deploy` errors with `ENOENT prisma_schema_build_bg.wasm`.
 3. **Seed script** — Don't ship `tsx` in the runner. Compile `prisma/seed.ts` to `prisma-compiled/seed.js` at build time with `tsc`. Run via `node /app/prisma-compiled/seed.js`.
 4. **Migration command** — Use `node node_modules/prisma/build/index.js migrate deploy`, NOT `npx prisma migrate deploy`. The latter tries to reach npm registry and fails on the internal Docker network.
-5. **NextAuth `trustHost: true`** — Without it, production refuses the `recipes.vtproject.my.id` Host header (UntrustedHost error). Required when behind a tunnel/reverse proxy.
+5. **NextAuth `trustHost: true`** — Without it, production refuses the `<your-domain>` Host header (UntrustedHost error). Required when behind a tunnel/reverse proxy.
 6. **Edge-safe auth config** — Middleware runs in the edge runtime; it can't import `prisma` or `bcryptjs`. Split into `auth.config.ts` (edge-safe, no providers) and `lib/auth.ts` (Node, full providers). Middleware imports the edge one.
 
 ---
@@ -212,7 +212,7 @@ const bcrypt = require('bcryptjs');
 const p = new PrismaClient();
 (async () => {
   const hash = await bcrypt.hash('NEW_PASSWORD_HERE', 12);
-  await p.user.update({ where: { email: 'admin@family.local' }, data: { password: hash } });
+  await p.user.update({ where: { email: '<admin-email>' }, data: { password: hash } });
   console.log('Password reset OK');
   await p.\$disconnect();
 })();
@@ -268,5 +268,5 @@ docker compose exec -u root app node /app/prisma-compiled/seed.js
 - Set up automated backups (cron + rclone to cloud storage)
 - Configure Cloudflare Zero Trust Access policies (e.g. email OTP gate)
 - Add uptime monitoring (Cloudflare has free health checks, or use Healthchecks.io)
-- Set up a staging environment on `staging.recipes.vtproject.my.id`
+- Set up a staging environment on `staging.<your-domain>`
 - Add CI/CD: GitHub Actions to auto-build and push images on push to main
