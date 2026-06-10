@@ -180,6 +180,62 @@ is never reachable from outside the Docker network.
 - API route handlers import `auth` from `lib/auth` (Node, full session)
 - Prisma client is generated for `linux-musl-openssl-3.0.x` (Alpine runtime)
 
+## PWA Support
+
+The app is a Progressive Web App: installable on home screens with offline recipe
+reading. Zero external dependencies — manual service worker + static manifest.
+
+### Files
+
+| File | Purpose |
+|------|---------|
+| `public/manifest.json` | PWA manifest with Japandi theme colors (#A8956A / #F5F0EB) |
+| `public/sw.js` | Service worker with route-based caching strategies |
+| `public/icons/icon-192x192.png` | App icon (192px, any) |
+| `public/icons/icon-512x512.png` | App icon (512px, any) |
+| `public/icons/icon-512x512-maskable.png` | Maskable variant (512px) |
+| `public/icons/apple-touch-icon.png` | iOS home screen icon (180×180) |
+| `components/PWARegister.tsx` | SW registration + update lifecycle client component |
+| `components/PWAUpdatePrompt.tsx` | Banner when new SW is waiting to activate |
+| `components/OfflineIndicator.tsx` | Banner when user goes offline |
+
+### Caching Strategy
+
+| Resource | Strategy | Max Stale |
+|----------|----------|-----------|
+| `/_next/static/*` | CacheFirst | 1 year |
+| Font files (`.woff2?`, `.ttf`) | CacheFirst | 1 year |
+| `/sw.js`, `/manifest.json` | NetworkFirst | 0s (always fresh) |
+| `/api/recipes/*` (GET) | NetworkFirst | 7 days |
+| `/api/meal-plans/*` (GET) | NetworkFirst | 1 day |
+| `/uploads/*`, `/api/uploads/*` | StaleWhileRevalidate | 30 days |
+| Navigation pages (`/dashboard`, `/recipes`) | NetworkFirst | 1 hour |
+
+### Service Worker Lifecycle
+
+1. **Install**: precaches `/manifest.json`, activates immediately (`skipWaiting`)
+2. **Activate**: clears old caches, claims all clients (`clients.claim`)
+3. **Fetch**: routes requests to CacheFirst / NetworkFirst / StaleWhileRevalidate
+   based on URL pattern. Sensitive routes (`/api/auth/`, `/api/admin/`) bypass SW.
+4. **Update**: PWARegister detects `updatefound` / `statechange`, signals
+   PWAUpdatePrompt to show "Update available" banner. User clicks → SW posts
+   `SKIP_WAITING` → `controllerchange` fires → page reloads with new SW.
+
+### Auth & Offline
+
+All static routes respect the auth middleware. When offline:
+- Middleware redirects unauth'd requests to `/login` (which won't load without
+  network — the SW serves the cached dashboard as a fallback)
+- Previously visited recipe pages serve from cache (NetworkFirst with 1h stale)
+- The offline indicator banner (fixed top) shows when the network drops
+
+### Installation Requirements
+
+- Modern browser with Service Worker + Cache Storage API support
+- Chrome on Android: auto-prompts "Add to Home Screen"
+- iOS Safari: manual "Share → Add to Home Screen" only
+- HTTPS required (already via Cloudflare Tunnel)
+
 ## Phase 6 Features at a Glance
 
 | Feature | Storage | Endpoint(s) | UI |
