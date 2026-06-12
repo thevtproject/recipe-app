@@ -1,7 +1,7 @@
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
-import { RecipeForm } from '@/components/recipe/RecipeForm';
+import { RecipePageClient } from '@/components/recipe/RecipePageClient';
 
 type Step = { order: number; instruction: string };
 type MealCategory = 'BREAKFAST' | 'LUNCH' | 'DINNER' | 'BABY';
@@ -49,5 +49,5 @@ export default async function NewRecipePage({
     }
   }
 
-  return <RecipeForm mode="create" defaultValues={defaultValues} />;
+  return <RecipePageClient defaultValues={defaultValues} />;
 }
