@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { processRecipeImage, PROCESSED_IMAGE_EXT } from '@/lib/images';
+import { getClientIp, rateLimit } from '@/lib/rate-limit';
 
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 
@@ -30,6 +31,15 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user) {
     return NextResponse.json({ data: null, error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const ip = getClientIp(req);
+  const rl = rateLimit('upload', ip);
+  if (!rl.ok) {
+    return NextResponse.json(
+      { data: null, error: `Too many uploads. Try again in ${rl.retryAfterSec} seconds.` },
+      { status: 429 }
+    );
   }
 
   let formData: FormData;

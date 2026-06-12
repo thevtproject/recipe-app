@@ -4,6 +4,7 @@ import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { SALT_ROUNDS, checkPasswordStrength } from "@/lib/password";
 import crypto from "crypto";
+import { getClientIp, rateLimit } from "@/lib/rate-limit";
 
 const schema = z.object({
   token: z.string().min(1),
@@ -22,6 +23,15 @@ export async function POST(req: NextRequest) {
   }
 
   const { token, password } = parsed.data;
+
+  const ip = getClientIp(req);
+  const rl = rateLimit("forgotPassword", ip);
+  if (!rl.ok) {
+    return NextResponse.json(
+      { data: null, error: `Too many requests. Try again in ${rl.retryAfterSec} seconds.` },
+      { status: 429 }
+    );
+  }
 
   // Check password strength
   const pwCheck = checkPasswordStrength(password);
