@@ -52,8 +52,8 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/");
-    router.refresh();
+    // Force hard redirect since Next.js router.push is not working
+    window.location.href = "/dashboard";
   }
 
   if (!mounted) {
