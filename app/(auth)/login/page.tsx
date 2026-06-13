@@ -1,65 +1,10 @@
-"use client";
-
-import { useState, useEffect } from "react";
-import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default function LoginPage() {
-  const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-
-    const formData = new FormData(e.currentTarget);
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
-
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
-
-    setLoading(false);
-
-    if ((result?.error as string)?.startsWith("RATE_LIMITED:")) {
-      const msg = (result?.error as string).slice("RATE_LIMITED:".length);
-      setError(msg);
-      return;
-    }
-
-    if ((result?.error as string) === "ACCOUNT_PENDING_APPROVAL") {
-      router.push("/pending");
-      return;
-    }
-
-    if (result?.error) {
-      setError("Invalid email or password.");
-      return;
-    }
-
-    // Force hard redirect since Next.js router.push is not working
-    window.location.href = "/dashboard";
-  }
-
-  if (!mounted) {
-    return null;
-  }
-
   return (
     <Card className="border-border shadow-sm">
       <CardHeader>
@@ -67,13 +12,14 @@ export default function LoginPage() {
         <CardDescription>Enter your credentials to continue</CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form action="/api/auth/signin/credentials" method="POST" className="space-y-4">
+          <input type="hidden" name="callbackUrl" value="/dashboard" />
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
-              name="email"
               type="email"
+              name="email"
               placeholder="you@example.com"
               required
               autoComplete="email"
@@ -83,17 +29,14 @@ export default function LoginPage() {
             <Label htmlFor="password">Password</Label>
             <Input
               id="password"
-              name="password"
               type="password"
+              name="password"
               required
               autoComplete="current-password"
             />
           </div>
-          {error && (
-            <p className="text-sm text-destructive">{error}</p>
-          )}
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Signing in…" : "Sign in"}
+          <Button type="submit" className="w-full">
+            Sign in
           </Button>
           <p className="text-center text-sm text-muted-foreground">
             <Link href="/forgot-password" className="underline hover:text-foreground">
@@ -102,10 +45,7 @@ export default function LoginPage() {
           </p>
         </form>
         <p className="text-center text-sm text-muted-foreground mt-4">
-          No account?{" "}
-          <Link href="/register" className="text-primary hover:underline">
-            Register
-          </Link>
+          No account? <Link href="/register" className="text-primary hover:underline">Register</Link>
         </p>
       </CardContent>
     </Card>
