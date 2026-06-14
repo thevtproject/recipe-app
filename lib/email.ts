@@ -14,7 +14,7 @@ export async function sendPasswordResetEmail(opts: {
   if (!apiKey) throw new Error("RESEND_API_KEY is not configured");
   const resend = new Resend(apiKey);
 
-  await resend.emails.send({
+  const result = await resend.emails.send({
     from: FROM,
     to,
     subject: "Reset your Recipe Book password",
@@ -45,4 +45,10 @@ export async function sendPasswordResetEmail(opts: {
 </body>
 </html>`,
   });
+
+  if (result.error) {
+    console.error("[email] Resend API error:", result.error);
+    throw new Error(`Resend: ${result.error.name ?? "unknown"} — ${result.error.message ?? "send failed"}`);
+  }
+  console.log("[email] sent password reset, id:", result.data?.id);
 }
