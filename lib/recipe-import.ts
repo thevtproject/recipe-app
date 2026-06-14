@@ -79,7 +79,7 @@ function parseImage(raw: unknown): string | undefined {
       }
     }
   }
-  if (raw && typeof raw === 'object' && 'url' in raw) {
+  if (typeof raw === 'object' && 'url' in raw) {
     return String((raw as Record<string, unknown>).url);
   }
   return undefined;
@@ -390,9 +390,18 @@ async function extractWithOpenAI(
   const client = new OpenAI({ apiKey });
 
   // Trim the HTML body text to a reasonable length to avoid token blowup
-  const bodyText = htmlText
-    .replace(/<script[\s\S]*?<\/script>/gi, '')
-    .replace(/<style[\s\S]*?<\/style>/gi, '')
+  // Strip <script> and <style> blocks robustly. Loop until stable to defeat
+  // nested/overlapping evasion (e.g. "<scr<script>ipt>") and allow whitespace
+  // before > on closing tags (e.g. "</script >"). CodeQL js/incomplete-multi-char-sanitization
+  let bodyText = htmlText;
+  for (;;) {
+    const next = bodyText
+      .replace(/<script\b[\s\S]*?<\/script\s*>/gi, '')
+      .replace(/<style\b[\s\S]*?<\/style\s*>/gi, '');
+    if (next === bodyText) break;
+    bodyText = next;
+  }
+  bodyText = bodyText
     .replace(/<[^>]+>/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
