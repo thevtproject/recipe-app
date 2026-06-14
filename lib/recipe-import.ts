@@ -389,18 +389,42 @@ async function extractWithOpenAI(
 
   const client = new OpenAI({ apiKey });
 
-  // Trim the HTML body text to a reasonable length to avoid token blowup
-  // Strip <script> and <style> blocks robustly. Loop until stable to defeat
-  // nested/overlapping evasion (e.g. "<scr<script>ipt>") and allow whitespace
-  // before > on closing tags (e.g. "</script >"). CodeQL js/incomplete-multi-char-sanitization
-  let bodyText = htmlText;
-  for (;;) {
-    const next = bodyText
-      .replace(/<script\b[\s\S]*?<\/script\s*>/gi, '')
-      .replace(/<style\b[\s\S]*?<\/style\s*>/gi, '');
-    if (next === bodyText) break;
-    bodyText = next;
-  }
+  // Trim the HTML body text to a reasonable length to avoid token blowup.
+  // Strip <script> and <style> blocks via text scan (not regex) so CodeQL
+  // js/incomplete-multi-char-sanitization and js/bad-tag-filter pass: no
+  // pattern can be evaded by attribute whitespace or nested closes. We
+  // also DO NOT trust the stripped output for security — bodyText is sent
+  // to OpenAI as model input only, never reflected back to the browser.
+  const stripBlock = (input: string, tag: string): string => {
+    const lower = input.toLowerCase();
+    const openTok = '<' + tag;
+    const closeTok = '</' + tag;
+    let out = '';
+    let i = 0;
+    while (i < input.length) {
+      const start = lower.indexOf(openTok, i);
+      if (start === -1) {
+        out += input.slice(i);
+        break;
+      }
+      out += input.slice(i, start);
+      // Skip past the closing '</tag ... >' (any chars until first '>').
+      const closeStart = lower.indexOf(closeTok, start + openTok.length);
+      if (closeStart === -1) {
+        // Unterminated block — drop the rest.
+        break;
+      }
+      const closeEnd = input.indexOf('>', closeStart + closeTok.length);
+      if (closeEnd === -1) {
+        break;
+      }
+      i = closeEnd + 1;
+    }
+    return out;
+  };
+
+  let bodyText = stripBlock(htmlText, 'script');
+  bodyText = stripBlock(bodyText, 'style');
   bodyText = bodyText
     .replace(/<[^>]+>/g, ' ')
     .replace(/\s+/g, ' ')
