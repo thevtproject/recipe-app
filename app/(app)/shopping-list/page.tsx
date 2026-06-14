@@ -3,17 +3,20 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { ShoppingCart, Printer, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ShoppingCart, Printer, X, ChevronLeft, ChevronRight, Plus, Trash2, Users } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 
 type Category = 'produce' | 'dairy' | 'meat' | 'pantry' | 'spices' | 'other';
 
 type ShoppingItem = {
+  id?: string; // for manual items
   name: string;
+  category?: string; // for manual items
   amount: string | null;
   unit: string | null;
   recipeIds: string[];
@@ -26,6 +29,12 @@ type ShoppingData = {
   from: string;
   until: string;
   scope: 'ME' | 'FAMILY';
+};
+
+type CheckRecord = {
+  itemKey: string;
+  checked: boolean;
+  checkedBy: string;
 };
 
 const CATEGORY_LABELS: Record<Category, string> = {
@@ -88,6 +97,7 @@ export default function ShoppingListPage() {
 function ShoppingListInner() {
   const searchParams = useSearchParams();
   const { data: session } = useSession();
+  const userId = (session?.user as { id?: string })?.id ?? null;
   const householdId = (session?.user as { householdId?: string | null } | undefined)?.householdId ?? null;
   const canUseFamily = !!householdId;
 
@@ -108,31 +118,11 @@ function ShoppingListInner() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Persisted check state: key = "name|unit", value = true
-  const [checked, setChecked] = useState<Record<string, boolean>>({});
+  // Persisted check state: key = "name|unit", value = { checked, checkedBy }
+  const [checked, setChecked] = useState<Record<string, { checked: boolean; checkedBy: string }>>({});
+  const [addItemOpen, setAddItemOpen] = useState(false);
 
   const storageKey = `shopping-list-checked-${from}-${until}-${scope}`;
-
-  // Load checked state from localStorage whenever the range/scope changes
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    try {
-      const raw = window.localStorage.getItem(storageKey);
-      setChecked(raw ? (JSON.parse(raw) as Record<string, boolean>) : {});
-    } catch {
-      setChecked({});
-    }
-  }, [storageKey]);
-
-  // Persist on change
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    try {
-      window.localStorage.setItem(storageKey, JSON.stringify(checked));
-    } catch {
-      // ignore quota errors
-    }
-  }, [checked, storageKey]);
 
   const fetchList = useCallback(async () => {
     setLoading(true);
@@ -155,9 +145,58 @@ function ShoppingListInner() {
     }
   }, [from, until, scope]);
 
+  // Fetch server checks and merge with localStorage
+  const fetchChecks = useCallback(async () => {
+    if (!userId) return;
+    try {
+      const monday = fmtDate(getMonday(new Date(from)));
+      const url = `/api/shopping-list/check?weekStart=${monday}&scope=${scope}`;
+      const res = await fetch(url);
+      const json = (await res.json()) as { data?: { checks: CheckRecord[] }; error?: string };
+      if (res.ok && json.data?.checks) {
+        const serverChecks: Record<string, { checked: boolean; checkedBy: string }> = {};
+        for (const c of json.data.checks) {
+          serverChecks[c.itemKey] = { checked: c.checked, checkedBy: c.checkedBy };
+        }
+        // Merge with localStorage (server wins)
+        const localRaw = typeof window !== 'undefined' ? window.localStorage.getItem(storageKey) : null;
+        const localChecks = localRaw ? (JSON.parse(localRaw) as Record<string, { checked: boolean; checkedBy: string }>) : {};
+        setChecked({ ...localChecks, ...serverChecks });
+      }
+    } catch {
+      // Fallback to localStorage only
+      if (typeof window !== 'undefined') {
+        try {
+          const raw = window.localStorage.getItem(storageKey);
+          setChecked(raw ? (JSON.parse(raw) as Record<string, { checked: boolean; checkedBy: string }>) : {});
+        } catch {
+          setChecked({});
+        }
+      }
+    }
+  }, [from, scope, storageKey, userId]);
+
   useEffect(() => {
     fetchList();
-  }, [fetchList]);
+    fetchChecks();
+  }, [fetchList, fetchChecks]);
+
+  // Poll checks every 15s when in FAMILY scope
+  useEffect(() => {
+    if (scope !== 'FAMILY') return;
+    const interval = setInterval(fetchChecks, 15000);
+    return () => clearInterval(interval);
+  }, [scope, fetchChecks]);
+
+  // Persist to localStorage on change
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(storageKey, JSON.stringify(checked));
+    } catch {
+      // ignore quota errors
+    }
+  }, [checked, storageKey]);
 
   // --- Date-range controls ---
 
@@ -184,12 +223,38 @@ function ShoppingListInner() {
   // --- Checkbox helpers ---
 
   function toggleItem(name: string, unit: string | null) {
+    if (!userId) return;
     const k = itemKey(name, unit);
+    const newChecked = !checked[k]?.checked;
+    
+    // Optimistic update
     setChecked((prev) => {
       const next = { ...prev };
-      if (next[k]) delete next[k];
-      else next[k] = true;
+      if (newChecked) {
+        next[k] = { checked: true, checkedBy: userId };
+      } else {
+        delete next[k];
+      }
       return next;
+    });
+
+    // Persist to server
+    const monday = fmtDate(getMonday(new Date(from)));
+    fetch('/api/shopping-list/check', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ itemKey: k, weekStart: monday, checked: newChecked, scope }),
+    }).catch(() => {
+      // Revert on error
+      setChecked((prev) => {
+        const next = { ...prev };
+        if (!newChecked) {
+          next[k] = { checked: true, checkedBy: userId };
+        } else {
+          delete next[k];
+        }
+        return next;
+      });
     });
   }
 
@@ -199,6 +264,64 @@ function ShoppingListInner() {
 
   function handlePrint() {
     if (typeof window !== 'undefined') window.print();
+  }
+
+  async function handleAddItem(newItem: { name: string; category: string; amount?: string; unit?: string }) {
+    if (!userId) return;
+    const monday = fmtDate(getMonday(new Date(from)));
+    try {
+      const res = await fetch('/api/shopping-list/items', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...newItem, weekStart: monday }),
+      });
+      const json = (await res.json()) as { data?: ShoppingItem; error?: string };
+      if (res.ok && json.data) {
+        // Optimistic: add to inline data
+        setData((prev) => {
+          if (!prev) return prev;
+          const cat = json.data!.category as Category;
+          return {
+            ...prev,
+            categories: {
+              ...prev.categories,
+              [cat]: [...(prev.categories[cat] ?? []), { ...json.data!, recipeIds: [] }],
+            },
+            totalItems: prev.totalItems + 1,
+          };
+        });
+        setAddItemOpen(false);
+      } else {
+        alert(json.error ?? 'Failed to add item');
+      }
+    } catch {
+      alert('Failed to add item');
+    }
+  }
+
+  async function handleDeleteItem(id: string, cat: Category) {
+    if (!confirm('Delete this item?')) return;
+    try {
+      const res = await fetch(`/api/shopping-list/items/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setData((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            categories: {
+              ...prev.categories,
+              [cat]: prev.categories[cat].filter((item) => item.id !== id),
+            },
+            totalItems: prev.totalItems - 1,
+          };
+        });
+      } else {
+        const json = (await res.json()) as { error?: string };
+        alert(json.error ?? 'Failed to delete item');
+      }
+    } catch {
+      alert('Failed to delete item');
+    }
   }
 
   // --- Derived counts ---
@@ -216,9 +339,16 @@ function ShoppingListInner() {
 
   const totalCount = flatItems.length;
   const checkedCount = useMemo(
-    () => flatItems.filter(({ item }) => checked[itemKey(item.name, item.unit)]).length,
+    () => flatItems.filter(({ item }) => checked[itemKey(item.name, item.unit)]?.checked).length,
     [flatItems, checked],
   );
+  const checkedByOthers = useMemo(() => {
+    if (scope !== 'FAMILY' || !userId) return 0;
+    return flatItems.filter(({ item }) => {
+      const c = checked[itemKey(item.name, item.unit)];
+      return c?.checked && c.checkedBy !== userId;
+    }).length;
+  }, [flatItems, checked, scope, userId]);
 
   // If user is not in a household, force scope to ME
   useEffect(() => {
@@ -255,11 +385,24 @@ function ShoppingListInner() {
             <Button variant="outline" size="sm" onClick={clearChecked} disabled={checkedCount === 0}>
               <X size={14} className="mr-1" /> Clear all
             </Button>
+            <Button variant="outline" size="sm" onClick={() => setAddItemOpen(true)}>
+              <Plus size={14} className="mr-1" /> Add item
+            </Button>
             <Button variant="default" size="sm" onClick={handlePrint} disabled={totalCount === 0}>
               <Printer size={14} className="mr-1" /> Print
             </Button>
           </div>
         </div>
+
+        {/* Add Item Dialog */}
+        <Dialog open={addItemOpen} onOpenChange={setAddItemOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add Manual Item</DialogTitle>
+            </DialogHeader>
+            <AddItemForm onSubmit={handleAddItem} />
+          </DialogContent>
+        </Dialog>
 
         {/* Date range + scope controls */}
         <Card className="p-4 space-y-4">
@@ -360,6 +503,7 @@ function ShoppingListInner() {
         {totalCount > 0 && (
           <p className="text-xs text-muted-foreground">
             {checkedCount} of {totalCount} item{totalCount !== 1 ? 's' : ''} checked
+            {scope === 'FAMILY' && checkedByOthers > 0 && ` (${checkedByOthers} by others)`}
           </p>
         )}
       </div>
@@ -389,10 +533,13 @@ function ShoppingListInner() {
                 <Card className="divide-y divide-border">
                   {items.map((item) => {
                     const k = itemKey(item.name, item.unit);
-                    const isChecked = !!checked[k];
+                    const checkState = checked[k];
+                    const isChecked = checkState?.checked ?? false;
+                    const checkedByOther = scope === 'FAMILY' && checkState?.checkedBy && checkState.checkedBy !== userId;
+                    const isManual = item.recipeIds.length === 0;
                     return (
                       <label
-                        key={k}
+                        key={item.id ?? k}
                         className={cn(
                           'flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors hover:bg-muted/50',
                           isChecked && 'opacity-50'
@@ -411,11 +558,31 @@ function ShoppingListInner() {
                           )}
                         >
                           {item.name}
+                          {isManual && <span className="ml-2 text-xs text-muted-foreground">(manual)</span>}
                         </span>
+                        {checkedByOther && (
+                          <span className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Users size={12} />
+                          </span>
+                        )}
                         {item.amount && (
                           <span className="text-xs text-muted-foreground tabular-nums">
                             {item.amount}
                           </span>
+                        )}
+                        {isManual && item.id && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleDeleteItem(item.id!, cat);
+                            }}
+                            className="text-muted-foreground hover:text-destructive transition-colors"
+                            aria-label="Delete item"
+                          >
+                            <Trash2 size={14} />
+                          </button>
                         )}
                       </label>
                     );
@@ -427,5 +594,79 @@ function ShoppingListInner() {
         )}
       </div>
     </>
+  );
+}
+
+// --- Add Item Form ---
+
+function AddItemForm({ onSubmit }: { onSubmit: (item: { name: string; category: string; amount?: string; unit?: string }) => void }) {
+  const [name, setName] = useState('');
+  const [category, setCategory] = useState<Category>('other');
+  const [amount, setAmount] = useState('');
+  const [unit, setUnit] = useState('');
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!name.trim()) return;
+    onSubmit({
+      name: name.trim(),
+      category,
+      amount: amount.trim() || undefined,
+      unit: unit.trim() || undefined,
+    });
+    setName('');
+    setAmount('');
+    setUnit('');
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-1.5">
+        <Label htmlFor="itemName">Item name *</Label>
+        <Input
+          id="itemName"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="e.g. Tomatoes"
+          required
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <Label htmlFor="itemAmount">Amount</Label>
+          <Input
+            id="itemAmount"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder="e.g. 500"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="itemUnit">Unit</Label>
+          <Input
+            id="itemUnit"
+            value={unit}
+            onChange={(e) => setUnit(e.target.value)}
+            placeholder="e.g. g"
+          />
+        </div>
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="itemCategory">Category</Label>
+        <select
+          id="itemCategory"
+          value={category}
+          onChange={(e) => setCategory(e.target.value as Category)}
+          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          {CATEGORY_ORDER.map((cat) => (
+            <option key={cat} value={cat}>
+              {CATEGORY_LABELS[cat]}
+            </option>
+          ))}
+        </select>
+      </div>
+      <Button type="submit" className="w-full">Add Item</Button>
+    </form>
   );
 }

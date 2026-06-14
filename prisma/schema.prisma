@@ -121,6 +121,7 @@ model Recipe {
   // Phase 6: serving size for the recipe as-written
   servings    Int      @default(4)
   photoUrl    String?
+  sourceUrl   String?
   steps       Json     @default("[]")
   ingredients Json     @default("[]")
   authorId    String
@@ -174,4 +175,35 @@ model PlanShare {
   @@index([token])
   @@index([refId])
   @@map("plan_shares")
+}
+
+model ShoppingListCheck {
+  id          String   @id @default(cuid())
+  householdId String?
+  weekStart   DateTime @db.Date
+  itemKey     String   // hash of normalized "name|unit"
+  checked     Boolean  @default(true)
+  checkedBy   String   // userId
+  checkedAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([householdId, weekStart, itemKey])
+  @@index([householdId, weekStart])
+  @@map("shopping_list_checks")
+}
+
+model ShoppingListItem {
+  id          String   @id @default(cuid())
+  householdId String?
+  userId      String
+  weekStart   DateTime @db.Date
+  name        String
+  category    String   @default("other")
+  amount      String?
+  unit        String?
+  recipeId    String?  // null if manually added
+  createdAt   DateTime @default(now())
+
+  @@index([householdId, weekStart])
+  @@map("shopping_list_items")
 }

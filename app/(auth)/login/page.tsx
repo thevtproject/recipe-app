@@ -31,12 +31,6 @@ export default function LoginPage() {
 
     setLoading(false);
 
-    if ((result?.error as string)?.startsWith("RATE_LIMITED:")) {
-      const msg = (result?.error as string).slice("RATE_LIMITED:".length);
-      setError(msg);
-      return;
-    }
-
     if ((result?.error as string) === "ACCOUNT_PENDING_APPROVAL") {
       router.push("/pending");
       return;
@@ -47,8 +41,7 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/");
-    router.refresh();
+    window.location.href = "/dashboard";
   }
 
   return (
@@ -59,32 +52,36 @@ export default function LoginPage() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+              {error}
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
-              name="email"
               type="email"
+              name="email"
               placeholder="you@example.com"
               required
               autoComplete="email"
+              disabled={loading}
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
             <Input
               id="password"
-              name="password"
               type="password"
+              name="password"
               required
               autoComplete="current-password"
+              disabled={loading}
             />
           </div>
-          {error && (
-            <p className="text-sm text-destructive">{error}</p>
-          )}
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Signing in…" : "Sign in"}
+            {loading ? "Signing in..." : "Sign in"}
           </Button>
           <p className="text-center text-sm text-muted-foreground">
             <Link href="/forgot-password" className="underline hover:text-foreground">
@@ -93,10 +90,7 @@ export default function LoginPage() {
           </p>
         </form>
         <p className="text-center text-sm text-muted-foreground mt-4">
-          No account?{" "}
-          <Link href="/register" className="text-primary hover:underline">
-            Register
-          </Link>
+          No account? <Link href="/register" className="text-primary hover:underline">Register</Link>
         </p>
       </CardContent>
     </Card>

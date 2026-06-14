@@ -19,21 +19,33 @@ const CATEGORY_KEYWORDS: Record<Exclude<Category, 'other'>, string[]> = {
   produce: [
     'lettuce', 'tomato', 'onion', 'garlic', 'ginger', 'chili', 'chillie',
     'chilies', 'chile', 'herb', 'basil', 'cilantro', 'coriander', 'parsley',
-    'mint', 'vegetable', 'fruit', 'apple', 'banana', 'lemon', 'lime', 'orange',
+    'mint', 'dill', 'rosemary', 'sage', 'thyme', 'tarragon', 'chives',
+    'vegetable', 'fruit', 'apple', 'banana', 'lemon', 'lime', 'orange',
+    'mango', 'papaya', 'coconut', 'durian',
     'potato', 'carrot', 'pepper', 'bell pepper', 'cucumber', 'spinach',
     'kale', 'mushroom', 'mushrooms', 'broccoli', 'cauliflower', 'cabbage',
     'celery', 'corn', 'pea', 'zucchini', 'eggplant', 'aubergine', 'pumpkin',
     'scallion', 'scallions', 'green onion', 'shallot', 'leek', 'arugula',
     'avocado', 'berry', 'berries', 'strawberry', 'blueberry', 'grape',
+    'asparagus', 'okra', 'bean sprouts', 'bamboo shoots', 'water chestnuts',
+    'radish', 'turnip', 'jicama', 'artichoke',
+    'bok choy', 'kai lan', 'choy sum', 'gai lan',
   ],
   dairy: [
     'milk', 'butter', 'cheese', 'cream', 'yogurt', 'yoghurt', 'egg', 'eggs',
     'sour cream', 'parmesan', 'mozzarella', 'feta', 'ricotta', 'cheddar',
+    'condensed milk', 'evaporated milk', 'cream cheese', 'cottage cheese',
+    'heavy cream', 'half and half', 'ice cream',
   ],
   meat: [
     'chicken', 'beef', 'pork', 'fish', 'shrimp', 'salmon', 'turkey', 'lamb',
     'bacon', 'ham', 'sausage', 'tofu', 'prawn', 'prawns', 'tuna', 'cod',
     'duck', 'veal', 'anchovy', 'anchovies',
+    'ground beef', 'ground pork', 'ground turkey', 'ground meat',
+    'chicken breast', 'chicken thigh', 'chicken drumstick', 'chicken wing',
+    'pork belly', 'pork chop', 'spare ribs',
+    'bacon bits', 'chorizo', 'salami', 'pepperoni', 'prosciutto',
+    'imitation crab', 'squid', 'mussels', 'clam',
   ],
   pantry: [
     'rice', 'pasta', 'noodle', 'noodles', 'flour', 'sugar', 'oil', 'vinegar',
@@ -43,12 +55,29 @@ const CATEGORY_KEYWORDS: Record<Exclude<Category, 'other'>, string[]> = {
     'chickpeas', 'peanut', 'peanut butter', 'sesame', 'maple syrup', 'olives',
     'pickle', 'cornstarch', 'corn starch', 'baking powder', 'baking soda',
     'yeast', 'sauce', 'tahini', 'miso',
+    'olive oil', 'canola oil', 'vegetable oil', 'sesame oil', 'coconut oil',
+    'balsamic vinegar', 'rice vinegar', 'apple cider vinegar',
+    'red wine vinegar', 'white wine vinegar',
+    'spaghetti', 'fettuccine', 'linguine', 'penne', 'rigatoni', 'macaroni',
+    'rice noodles', 'vermicelli', 'udon', 'soba', 'egg noodles', 'ramen',
+    'oyster sauce', 'hoisin sauce', 'fish sauce', 'sriracha',
+    'worcestershire sauce', 'teriyaki sauce', 'barbecue sauce', 'sweet chili sauce',
+    'canned tomatoes', 'coconut cream', 'canned tuna', 'sardines', 'canned corn',
+    'chocolate chips', 'cocoa powder', 'brown sugar', 'powdered sugar',
+    'cake flour', 'bread flour',
+    'quinoa', 'barley', 'couscous', 'bulgur',
   ],
   spices: [
     'pepper', 'cumin', 'paprika', 'oregano', 'thyme', 'cinnamon', 'star anise',
     'clove', 'cloves', 'nutmeg', 'turmeric', 'cardamom', 'coriander seed',
     'cayenne', 'chili powder', 'curry powder', 'bay leaf', 'bay leaves',
     'vanilla', 'vanilla extract', 'salt', 'black pepper', 'white pepper',
+    'garlic powder', 'onion powder', 'five spice', 'chinese five spice',
+    'garam masala', 'curry leaves', 'lemongrass', 'galangal',
+    'mustard seeds', 'fennel seeds', 'sesame seeds', 'poppy seeds',
+    'saffron', 'sumac', 'zaatar', 'dill weed', 'smoked paprika',
+    'aleppo pepper', 'red pepper flakes', 'chili flakes',
+    'szechuan pepper', 'sichuan pepper',
   ],
 };
 
@@ -66,6 +95,66 @@ function categorize(name: string): Category {
     }
   }
   return 'other';
+}
+
+// --- Plural / key normalization for smart merge ---
+
+/**
+ * Normalize a plural key to its singular form, but only if the singular
+ * key already exists in the set of all keys. This prevents e.g. "broccolis"
+ * from being stripped to "broccoli" if only "broccolis" exists.
+ *
+ * Handles:
+ *  - regular trailing-s  ("onions" → "onion", "leeks" → "leek")
+ *  - -ies  → -y          ("berries" → "berry")
+ *  - -ves  → -f / -fe    ("leaves"  → "leaf", "knives" → "knife")
+ */
+function normalizePluralKey(key: string, allKeys: Set<string>): string {
+  if (key.endsWith('ies')) {
+    const singular = key.slice(0, -3) + 'y';
+    if (allKeys.has(singular)) return singular;
+  }
+  if (key.endsWith('ves')) {
+    const withF = key.slice(0, -3) + 'f';
+    if (allKeys.has(withF)) return withF;
+    const withFe = key.slice(0, -3) + 'fe';
+    if (allKeys.has(withFe)) return withFe;
+  }
+  // Regular plural: drop trailing 's', but keep 'ss' words ("class")
+  if (key.endsWith('s') && !key.endsWith('ss') && key.length > 2) {
+    const singular = key.slice(0, -1);
+    if (allKeys.has(singular)) return singular;
+  }
+  return key;
+}
+
+/**
+ * Merge `source` into `target` inside the accumulator map.
+ * - Totals are summed per unit.
+ * - Display entries from source are kept if target doesn't have one for that unit.
+ * - Recipe IDs are unioned.
+ * - The name is updated to the shortest among all merged entries
+ *   (this naturally prefers singular over plural, e.g. "onion" over "onions").
+ */
+function mergeAccEntries(
+  target: { name: string; totals: Map<string, number>; display: Map<string, string>; recipeIds: Set<string> },
+  source: { name: string; totals: Map<string, number>; display: Map<string, string>; recipeIds: Set<string> },
+): void {
+  for (const [u, v] of source.totals) {
+    target.totals.set(u, (target.totals.get(u) ?? 0) + v);
+  }
+  for (const [u, d] of source.display) {
+    if (!target.display.has(u)) {
+      target.display.set(u, d);
+    }
+  }
+  for (const id of source.recipeIds) {
+    target.recipeIds.add(id);
+  }
+  // Prefer shortest display name (usually singular over plural)
+  if (source.name.length < target.name.length) {
+    target.name = source.name;
+  }
 }
 
 // --- Amount / unit helpers (structured data: amount is number|null, unit is canonical) ---
@@ -251,7 +340,33 @@ export async function GET(req: NextRequest) {
         const display = ing.note
           ? (ing.unit ? `${ing.note} ${ing.unit}` : ing.note)
           : (ing.unit ? ing.unit : '—');
-        if (!entry.display.has(unitKey)) entry.display.set(unitKey, display);
+        // Prefer entries with meaningful notes over the '—' placeholder
+        const existing = entry.display.get(unitKey);
+        if (!existing) {
+          entry.display.set(unitKey, display);
+        } else if (existing === '—' && display !== '—') {
+          entry.display.set(unitKey, display);
+        }
+      }
+    }
+  }
+
+  // --- Normalize plurals: merge entries (e.g. "onions" → "onion") ---
+  {
+    const allKeys = new Set(acc.keys());
+    const toMerge = new Map<string, string[]>();
+    for (const key of allKeys) {
+      const normalized = normalizePluralKey(key, allKeys);
+      if (normalized !== key) {
+        if (!toMerge.has(normalized)) toMerge.set(normalized, []);
+        toMerge.get(normalized)!.push(key);
+      }
+    }
+    for (const [targetKey, sourceKeys] of toMerge) {
+      const target = acc.get(targetKey)!;
+      for (const sourceKey of sourceKeys) {
+        mergeAccEntries(target, acc.get(sourceKey)!);
+        acc.delete(sourceKey);
       }
     }
   }
@@ -267,40 +382,56 @@ export async function GET(req: NextRequest) {
     let unit: string | null = null;
 
     if (entry.totals.size > 0) {
-      // Pick the unit with the largest total for the display
-      let bestUnit = '';
-      let bestTotal = -Infinity;
-      for (const [u, v] of Array.from(entry.totals)) {
-        if (v > bestTotal) { bestTotal = v; bestUnit = u; }
-      }
-      if (bestUnit && bestUnit !== '__none__') {
-        // Convert back from base unit if it's a mass/volume unit
-        const base = UNIT_CONVERSIONS[bestUnit];
-        if (base && base !== 1) {
-          // use a friendly unit: if value >= 1000g show kg, etc.
-          if (bestUnit === 'g' && bestTotal >= 1000) {
-            amount = formatAmount(bestTotal / 1000, 'kg');
-            unit = 'kg';
-          } else if (bestUnit === 'ml' && bestTotal >= 1000) {
-            amount = formatAmount(bestTotal / 1000, 'l');
-            unit = 'l';
+      // Check if there are multiple mixable units to combine (e.g. "1 tbsp + 2 tsp")
+      const allEntries = Array.from(entry.totals.entries());
+      const nonZeroEntries = allEntries.filter(([, v]) => v > 0);
+      const allMixable = nonZeroEntries.length > 0
+        && nonZeroEntries.every(([u]) => u === '__none__' || MIXABLE_UNITS.has(u));
+
+      if (allMixable && nonZeroEntries.length >= 2) {
+        // Combine multiple mixable units: "1 tbsp + 2 tsp"
+        const parts = nonZeroEntries.map(([u, v]) =>
+          u === '__none__' ? formatAmount(v, null) : formatAmount(v, u)
+        );
+        amount = parts.join(' + ');
+        unit = null;
+      } else {
+        // Fall back to picking the unit with the largest total
+        let bestUnit = '';
+        let bestTotal = -Infinity;
+        for (const [u, v] of Array.from(entry.totals)) {
+          if (v > bestTotal) { bestTotal = v; bestUnit = u; }
+        }
+        if (bestUnit && bestUnit !== '__none__') {
+          // Convert back from base unit if it's a mass/volume unit
+          const base = UNIT_CONVERSIONS[bestUnit];
+          if (base && base !== 1) {
+            // use a friendly unit: if value >= 1000g show kg, etc.
+            if (bestUnit === 'g' && bestTotal >= 1000) {
+              amount = formatAmount(bestTotal / 1000, 'kg');
+              unit = 'kg';
+            } else if (bestUnit === 'ml' && bestTotal >= 1000) {
+              amount = formatAmount(bestTotal / 1000, 'l');
+              unit = 'l';
+            } else {
+              amount = formatAmount(bestTotal, bestUnit);
+              unit = bestUnit;
+            }
           } else {
             amount = formatAmount(bestTotal, bestUnit);
             unit = bestUnit;
           }
         } else {
-          amount = formatAmount(bestTotal, bestUnit);
-          unit = bestUnit;
+          // no unit
+          amount = formatAmount(bestTotal, null);
+          unit = null;
         }
-      } else {
-        // no unit
-        amount = formatAmount(bestTotal, null);
-        unit = null;
       }
     } else if (entry.display.size > 0) {
-      // non-numeric: show first recorded display text
+      // non-numeric: prefer meaningful display text over '—'
       const displayValues = Array.from(entry.display.values()) as string[];
-      amount = displayValues[0] ?? null;
+      const meaningful = displayValues.find(d => d !== '—');
+      amount = meaningful ?? displayValues[0] ?? null;
       unit = null;
     }
 

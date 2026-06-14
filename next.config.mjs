@@ -39,20 +39,16 @@ const nextConfig = {
             key: 'Referrer-Policy',
             value: 'strict-origin-when-cross-origin',
           },
-          // Light CSP — family app with no 3rd-party scripts. Tighten further
-          // if analytics or other CDNs are added.
-          // - default-src 'self' for everything
-          // - img-src 'self' + data: (avatars/recipes), and our own uploads
-          // - script-src 'self' 'strict-dynamic' (allows scripts loaded by trusted scripts)
-          // - style-src 'self' 'unsafe-inline' (shadcn injects style tags)
-          // - connect-src 'self' (NextAuth needs to call same-origin API)
+          // Light CSP — family app with no 3rd-party scripts.
+          // Next.js inline scripts require 'unsafe-inline' OR nonce (not implemented yet)
+          // - script-src 'self' 'unsafe-inline' allows inline <script> for React hydration
           {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
               "img-src 'self' data: blob:",
               "style-src 'self' 'unsafe-inline'",
-              "script-src 'self' 'strict-dynamic'",
+              "script-src 'self' 'unsafe-inline'",
               "font-src 'self' data:",
               "connect-src 'self'",
               "worker-src 'self'",
